@@ -33,6 +33,9 @@ htmlcov/
 .dmypy.json
 dmypy.json
 .pyre/
+venv/
+env/
+ENV/
 
 # Node
 node_modules/
