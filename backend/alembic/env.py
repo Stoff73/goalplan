@@ -1,15 +1,14 @@
 """
 Alembic migration environment configuration.
 
-This module configures Alembic to work with our async SQLAlchemy setup
+This module configures Alembic to work with our SQLAlchemy setup
 and automatically detect model changes for migration generation.
 """
 
 from logging.config import fileConfig
-import asyncio
+from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
@@ -70,54 +69,34 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection) -> None:
-    """
-    Run migrations with the given connection.
-
-    Args:
-        connection: SQLAlchemy connection
-    """
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata,
-        compare_type=True,  # Detect column type changes
-        compare_server_default=True,  # Detect server default changes
-        render_as_batch=True,  # Support SQLite ALTER TABLE limitations
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_async_migrations() -> None:
-    """
-    Run migrations in 'online' mode with async support.
-
-    In this scenario we need to create an Engine and associate
-    a connection with the context.
-    """
-    configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = settings.SYNC_DATABASE_URL
-
-    connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-
-    await connectable.dispose()
-
-
 def run_migrations_online() -> None:
     """
     Run migrations in 'online' mode.
 
     Creates an Engine and associates a connection with the context.
     """
-    asyncio.run(run_async_migrations())
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = settings.SYNC_DATABASE_URL
+
+    connectable = engine_from_config(
+        configuration,
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True,
+            render_as_batch=True,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+    connectable.dispose()
 
 
 # Determine which mode to run migrations in
