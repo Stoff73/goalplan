@@ -73,44 +73,82 @@ goalplan/
 
 ### Prerequisites
 
-- **Python 3.11+**
+- **Python 3.12+** (currently using 3.12.11)
 - **Node.js 20+**
 - **PostgreSQL 15+**
 - **Redis 7+**
 
 ### Backend Setup
 
-1. **Install PostgreSQL and Redis** (see `backend/DATABASE_SETUP.md` for detailed instructions)
-
-2. **Create database and user:**
+1. **Install Python 3.12** (if not already installed):
    ```bash
-   createuser -P goalplan_user
-   createdb -O goalplan_user goalplan_dev
+   # macOS (Homebrew)
+   brew install python@3.12
+   ```
+
+2. **Create and activate virtual environment:**
+   ```bash
+   cd backend
+   /opt/homebrew/bin/python3.12 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+   # Verify Python version
+   python --version  # Should show Python 3.12.11
    ```
 
 3. **Install Python dependencies:**
    ```bash
-   cd backend
+   # Make sure venv is activated (you should see (venv) in your prompt)
    pip install -r requirements.txt
    ```
 
-4. **Configure environment:**
+4. **Install PostgreSQL and Redis** (see `backend/DATABASE_SETUP.md` for detailed instructions)
+
+5. **Create database and user:**
+   ```bash
+   # Start PostgreSQL service
+   brew services start postgresql@15
+
+   # Create user and databases
+   psql postgres
+   ```
+
+   In PostgreSQL prompt:
+   ```sql
+   CREATE USER goalplan_user WITH PASSWORD 'your_secure_password';
+   CREATE DATABASE goalplan_dev OWNER goalplan_user;
+   CREATE DATABASE goalplan_test OWNER goalplan_user;
+   GRANT ALL PRIVILEGES ON DATABASE goalplan_dev TO goalplan_user;
+   GRANT ALL PRIVILEGES ON DATABASE goalplan_test TO goalplan_user;
+   \q
+   ```
+
+6. **Configure environment:**
    ```bash
    cp .env.example .env
    # Edit .env with your database credentials
+   nano .env  # or use your preferred editor
    ```
 
-5. **Run migrations:**
+7. **Run migrations:**
    ```bash
+   # Make sure venv is activated
    alembic upgrade head
    ```
 
-6. **Start backend server:**
+8. **Start backend server:**
    ```bash
+   # Make sure venv is activated
    uvicorn main:app --reload
    # API available at http://localhost:8000
    # Docs available at http://localhost:8000/docs
    ```
+
+**Note:** Always activate the virtual environment before running any Python commands:
+```bash
+cd backend
+source venv/bin/activate
+```
 
 ### Frontend Setup
 
@@ -138,6 +176,7 @@ goalplan/
 **Backend:**
 ```bash
 cd backend
+source venv/bin/activate                  # Activate venv first!
 pytest tests/ -v                          # All tests
 pytest tests/test_connectivity.py -v     # Connectivity tests
 pytest --cov=. --cov-report=html         # With coverage
@@ -156,9 +195,10 @@ npx playwright test --ui                  # E2E with UI
 **Backend:**
 ```bash
 cd backend
-black .                # Format code
-isort .                # Sort imports
-mypy .                 # Type checking
+source venv/bin/activate                  # Activate venv first!
+black .                                   # Format code
+isort .                                   # Sort imports
+mypy .                                    # Type checking
 ```
 
 **Frontend:**
