@@ -69,6 +69,32 @@ goalplan/
     └── instructions.md # Development instructions
 ```
 
+## Quick Start
+
+Once you've completed the initial setup (see below), start the application with:
+
+```bash
+./start.sh
+```
+
+This starts both backend and frontend services. Access:
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:8000
+- **API Docs:** http://localhost:8000/docs
+
+To stop all services:
+```bash
+./stop.sh
+```
+
+**Individual services:**
+```bash
+./start-backend.sh   # Backend only
+./start-frontend.sh  # Frontend only
+```
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -102,32 +128,42 @@ goalplan/
    pip install -r requirements.txt
    ```
 
-4. **Install PostgreSQL and Redis** (see `backend/DATABASE_SETUP.md` for detailed instructions)
-
-5. **Create database and user:**
+4. **Install and start PostgreSQL:**
    ```bash
+   # Install PostgreSQL 15
+   brew install postgresql@15
+
    # Start PostgreSQL service
    brew services start postgresql@15
 
    # Create user and databases
-   psql postgres
+   /opt/homebrew/opt/postgresql@15/bin/psql postgres -c "CREATE USER goalplan_user WITH PASSWORD 'goalplan_dev_password';"
+   /opt/homebrew/opt/postgresql@15/bin/psql postgres -c "CREATE DATABASE goalplan_dev OWNER goalplan_user;"
+   /opt/homebrew/opt/postgresql@15/bin/psql postgres -c "CREATE DATABASE goalplan_test OWNER goalplan_user;"
+   /opt/homebrew/opt/postgresql@15/bin/psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE goalplan_dev TO goalplan_user;"
+   /opt/homebrew/opt/postgresql@15/bin/psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE goalplan_test TO goalplan_user;"
+
+   # Verify connection
+   /opt/homebrew/opt/postgresql@15/bin/psql -U goalplan_user -d goalplan_dev -h localhost -c "SELECT 'Connection successful!' as status;"
    ```
 
-   In PostgreSQL prompt:
-   ```sql
-   CREATE USER goalplan_user WITH PASSWORD 'your_secure_password';
-   CREATE DATABASE goalplan_dev OWNER goalplan_user;
-   CREATE DATABASE goalplan_test OWNER goalplan_user;
-   GRANT ALL PRIVILEGES ON DATABASE goalplan_dev TO goalplan_user;
-   GRANT ALL PRIVILEGES ON DATABASE goalplan_test TO goalplan_user;
-   \q
+5. **Install and start Redis:**
+   ```bash
+   # Install Redis
+   brew install redis
+
+   # Start Redis service
+   brew services start redis
+
+   # Verify connection
+   redis-cli ping  # Should return PONG
    ```
 
 6. **Configure environment:**
    ```bash
    cp .env.example .env
-   # Edit .env with your database credentials
-   nano .env  # or use your preferred editor
+   # Edit .env if you used a different password
+   # Default password is 'goalplan_dev_password'
    ```
 
 7. **Run migrations:**
@@ -136,15 +172,27 @@ goalplan/
    alembic upgrade head
    ```
 
-8. **Start backend server:**
+8. **Start the application:**
    ```bash
-   # Make sure venv is activated
+   # Option 1: Use the startup script (starts both backend and frontend)
+   cd /Users/CSJ/Desktop/goalplan
+   ./start.sh
+
+   # Option 2: Start manually
+   # Terminal 1 - Backend
+   cd backend
+   source venv/bin/activate
    uvicorn main:app --reload
-   # API available at http://localhost:8000
-   # Docs available at http://localhost:8000/docs
+
+   # Terminal 2 - Frontend
+   npm run dev
    ```
 
-**Note:** Always activate the virtual environment before running any Python commands:
+   - **Backend:** http://localhost:8000
+   - **API Docs:** http://localhost:8000/docs
+   - **Frontend:** http://localhost:5173
+
+**Note:** Always activate the virtual environment before running Python commands:
 ```bash
 cd backend
 source venv/bin/activate
