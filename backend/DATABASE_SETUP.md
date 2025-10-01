@@ -57,7 +57,7 @@ psql --version
 psql postgres
 
 # Create database user
-CREATE USER goalplan_user WITH PASSWORD 'your_secure_password_here';
+CREATE USER goalplan_user WITH PASSWORD 'goalplan_dev_password';
 
 # Create development database
 CREATE DATABASE goalplan_dev OWNER goalplan_user;

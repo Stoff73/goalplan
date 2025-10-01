@@ -15,7 +15,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^6.21.1",
-    "internal-packages-ui": "workspace:*"
+    "internal-packages-ui": "file:../internal-packages/ui"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
