@@ -21,7 +21,7 @@ from datetime import timedelta
 from redis.asyncio import Redis, ConnectionPool
 from redis.exceptions import RedisError
 
-from backend.config import settings
+from config import settings
 
 
 class RedisClient:

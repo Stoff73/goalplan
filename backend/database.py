@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import NullPool, QueuePool
 
-from backend.config import settings
+from config import settings
 
 
 # Create async engine with connection pooling
