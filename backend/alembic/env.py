@@ -21,13 +21,13 @@ from pathlib import Path
 backend_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from backend.config import settings
-from backend.database import Base
+from config import settings
+from database import Base
 
 # Import all models here to ensure they are registered with Base.metadata
 # This is critical for Alembic to auto-generate migrations
-# from backend.models.user import User
-# from backend.models.account import Account
+# from models.user import User
+# from models.account import Account
 # Add more model imports as they are created
 
 # Alembic Config object
