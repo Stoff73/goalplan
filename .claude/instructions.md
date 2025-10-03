@@ -14,6 +14,46 @@
 
 ---
 
+## ⚠️ CRITICAL: Mandatory Testing Protocol ⚠️
+
+**RULE: NO TASK IS COMPLETE WITHOUT BROWSER TESTING**
+
+After making ANY code change that affects the application:
+
+1. **Restart services** (if backend changes):
+   ```bash
+   ./stop.sh && ./start.sh
+   ```
+
+2. **Wait for startup** (5-10 seconds)
+
+3. **Open browser** to http://localhost:5173
+
+4. **Test affected pages** manually
+
+5. **Check browser console** (F12) for errors
+
+6. **Check Network tab** for failed requests (404, 500, etc.)
+
+7. **Verify functionality** actually works
+
+8. **ONLY THEN** mark task complete
+
+**WHY THIS IS MANDATORY:**
+- Code can compile successfully but still break the application
+- Type annotations can be wrong even if syntax is correct
+- Backend logs show requests but NOT if the app works
+- User discovered Bug #18 because testing was skipped
+- "It should work" is NOT verification - "I tested it works" is
+
+**Example of Failure:**
+- Bug #18: Fixed API paths, didn't test browser
+- Result: Tax Status and Income pages completely broken (500 errors)
+- User unable to use core functionality
+- Could have been caught immediately with browser testing
+
+---
+
 ## Agent Delegation Rules
 
 ### When to Delegate
@@ -29,6 +69,56 @@
 ```
 
 ### How to Delegate
+
+**⚠️ CRITICAL: Agent work MUST be verified before acceptance**
+
+After delegating to an agent, you MUST:
+1. **Run the actual tests** to verify they pass (do NOT trust agent reports)
+2. **Check the code quality** - read key files to ensure they match specifications
+3. **Test in browser** - follow the Mandatory Testing Protocol above
+4. **If tests fail, quality is poor, OR browser testing reveals issues:**
+   - Identify specific issues
+   - Re-delegate to the same agent with clear, detailed instructions on what to fix
+   - Include error messages, test output, and specific requirements
+5. **Repeat verification** until all tests pass, code meets standards, AND app works in browser
+6. **NEVER mark a task complete** without:
+   - Personally verifying test results
+   - Actually testing the application in a browser
+   - Confirming zero errors in browser console
+   - Verifying all API calls succeed (Network tab)
+
+**Example verification workflow:**
+```bash
+# 1. Backend verification (ALWAYS use .venv Python 3.12.11, NOT system python3 3.9.6)
+# Virtual environment is at project root: /Users/CSJ/Desktop/goalplan/.venv
+# Option A: Use full path (RECOMMENDED):
+/Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/ -v --tb=line
+
+# Option B: Activate venv first:
+source .venv/bin/activate && cd backend && python -m pytest tests/ -v --tb=line
+
+# 2. Frontend verification (from project root)
+cd frontend && npm test
+npx playwright test
+
+# 3. Browser verification (MANDATORY, from project root)
+./stop.sh && ./start.sh
+sleep 5
+# Open http://localhost:5173 in browser
+# Navigate to all affected pages
+# Check console for errors (F12)
+# Check Network tab for failed requests
+# Verify actual functionality works
+```
+
+**Real-world example of why this matters:**
+- Agent fixed API paths (Bugs #16-17) ✓
+- Code compiled successfully ✓
+- Backend logs showed no errors ✓
+- Did NOT test in browser ✗
+- Result: Tax Status and Income pages completely broken ✗
+- User discovered Bug #18 on first page load ✗
+- Could have been caught immediately with browser testing ✓
 
 #### 🐍 Python Backend Tasks
 
@@ -62,25 +152,40 @@
 
 **Process:**
 1. Agent MUST read all listed "Context Files" before starting
-2. Import UI components from 'internal-packages/ui' (NOT '@/components/ui')
-3. Follow React 19 patterns (no forwardRef)
-4. Keep components simple and obvious
-5. Write comprehensive tests using Jest
+2. **CRITICAL:** Read and follow `STYLEGUIDE.md` for ALL UI/UX work
+3. Import UI components from 'internal-packages/ui' (NOT '@/components/ui')
+4. Follow React 19 patterns (no forwardRef)
+5. Keep components simple and obvious
+6. Write comprehensive tests using Jest
 
 **Responsibilities:**
 - React components
-- UI/UX implementation
+- UI/UX implementation (following STYLEGUIDE.md)
 - Forms and validation
 - State management (Context API)
 - Routing
 - Component testing (Jest only)
 
 **Requirements:**
+- **MANDATORY:** Follow `/Users/CSJ/Desktop/goalplan/STYLEGUIDE.md` for ALL UI/UX work
+  - **Narrative Storytelling:** Use "You're worth £325,000" NOT "Net Worth: £325,000"
+  - **Explain the why:** Every number needs context in plain language
+  - **Embed metrics:** No standalone metric cards, embed in sentences with <strong> tags
+  - **Short paragraphs:** 2-3 sentences maximum
+  - **Line height 1.7:** For narrative text readability
+  - **Section cards:** 32px padding, 12px border radius, shadow-sm
+  - **Spacing:** 48-64px between major sections
+  - **Progressive disclosure:** "Tell me more" expandable sections
+  - **Callout boxes:** For tips/warnings with colored backgrounds
+  - **Typography:** 16px body, monospace for currency, no uppercase labels
+  - **Colors:** #2563EB primary, #10B981 success, #F59E0B warning, #EF4444 error
+  - **Accessibility:** WCAG 2.1 Level AA compliance, keyboard navigation
 - **ALWAYS** import from 'internal-packages/ui'
 - **NEVER** use forwardRef (React 19 doesn't need it)
 - **AVOID** useEffect unless absolutely necessary
 - Keep components simple, functional, and obvious
 - Write comprehensive Jest tests for all logic
+- **Before implementing:** Read relevant STYLEGUIDE.md section for component type
 
 ---
 
@@ -103,8 +208,14 @@
 
 **Example:**
 ```bash
-pytest tests/models/test_user_model.py -v
-pytest tests/api/auth/test_registration.py -v
+# ALWAYS use .venv Python 3.12.11:
+/Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/models/test_user_model.py -v
+/Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/api/auth/test_registration.py -v
+
+# Or after activating venv:
+source .venv/bin/activate
+python -m pytest tests/models/test_user_model.py -v
+python -m pytest tests/api/auth/test_registration.py -v
 ```
 
 ### Frontend Testing
@@ -249,18 +360,25 @@ Every task lists required "Context Files" - these are shard documents containing
 - ESLint configuration
 - Prettier for formatting
 - Consistent component structure
+- **MANDATORY:** Follow `STYLEGUIDE.md` for all UI/UX
 
 **Patterns:**
 - React 19 (no forwardRef)
 - Import from 'internal-packages/ui'
 - Minimal useEffect usage
 - Simple, obvious components
+- **Narrative storytelling** approach (see STYLEGUIDE.md)
+  - Conversational tone ("you", "your")
+  - Metrics embedded in sentences
+  - Progressive disclosure (expandable sections)
+  - Generous white space (line-height 1.7 for narrative text)
 
 **Testing:**
 - Jest for component tests
 - Mock all API calls
 - Test all user interactions
 - Snapshot tests for structure
+- Test accessibility (keyboard navigation, ARIA labels)
 
 ---
 
@@ -362,7 +480,7 @@ Each phase ends with a comprehensive testing gate. **DO NOT PROCEED** until all 
   - Test user model creation
   - Test unique email constraint
   - Test default status is PENDING_VERIFICATION
-- [ ] **Run:** `pytest tests/models/test_user_model.py -v`
+- [ ] **Run:** `/Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/models/test_user_model.py -v`
 - [ ] **Acceptance:** All model tests pass
 
 **Agent Process:**
@@ -371,7 +489,7 @@ Step 2: Read securityCompliance.md
 Step 3: Read DataManagement.md
 Step 4: Implement exact table structure
 Step 5: Write comprehensive tests
-Step 6: Run pytest - ensure 100% pass
+Step 6: Run pytest with .venv Python 3.12.11 - ensure 100% pass
 Step 7: Mark task complete
 ```
 

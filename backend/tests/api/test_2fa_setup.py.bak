@@ -1,0 +1,338 @@
+"""
+Tests for 2FA setup endpoints.
+
+Tests cover:
+- 2FA setup initiation (enable endpoint)
+- QR code generation and format
+- Secret returned in response
+- Verification with correct code enables 2FA
+- Verification with wrong code fails
+- Backup codes generated and returned (10 codes)
+- Backup codes shown only once
+- Already enabled 2FA
+"""
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy import select
+
+from models import User2FA
+from services.totp import TOTPService
+
+
+@pytest.mark.asyncio
+class TestEnable2FA:
+    """Test suite for 2FA enable endpoint."""
+
+    async def test_enable_2fa_success(
+        self, async_client: AsyncClient, authenticated_headers
+    ):
+        """Test initiating 2FA setup."""
+        response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check response structure
+        assert data["success"] is True
+        assert "secret" in data
+        assert "qr_code" in data
+        assert "message" in data
+
+        # Check secret format (base32, ~32 chars)
+        assert len(data["secret"]) >= 26
+        assert data["secret"].isupper()
+
+        # Check QR code format (base64 data URI)
+        assert data["qr_code"].startswith("data:image/png;base64,")
+        assert len(data["qr_code"]) > 100
+
+    async def test_enable_2fa_requires_authentication(
+        self, async_client: AsyncClient
+    ):
+        """Test that enable endpoint requires authentication."""
+        response = await async_client.post("/api/v1/auth/2fa/enable")
+
+        assert response.status_code == 401
+
+    async def test_enable_2fa_already_enabled(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test error when 2FA already enabled."""
+        # Enable 2FA first
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret="JBSWY3DPEHPK3PXP",
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Try to enable again
+        response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "already enabled" in data["detail"].lower()
+
+    async def test_enable_2fa_creates_record(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test that enable endpoint creates 2FA record."""
+        response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+
+        assert response.status_code == 200
+
+        # Check database
+        result = await db_session.execute(
+            select(User2FA).where(User2FA.user_id == test_user.id)
+        )
+        user_2fa = result.scalar_one_or_none()
+
+        assert user_2fa is not None
+        assert user_2fa.enabled is False  # Not enabled until verified
+        assert user_2fa.secret is not None
+
+    async def test_enable_2fa_updates_existing_record(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test that enable endpoint updates existing disabled 2FA record."""
+        # Create disabled 2FA record
+        old_secret = "OLDSECRETO1234567"
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=old_secret,
+            enabled=False,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Enable 2FA (should update existing record)
+        response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Secret should be new
+        assert data["secret"] != old_secret
+
+        # Check database - should still be one record
+        result = await db_session.execute(
+            select(User2FA).where(User2FA.user_id == test_user.id)
+        )
+        records = result.all()
+        assert len(records) == 1
+
+
+@pytest.mark.asyncio
+class TestVerify2FASetup:
+    """Test suite for 2FA setup verification endpoint."""
+
+    async def test_verify_2fa_setup_success(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test successful 2FA setup verification."""
+        # Enable 2FA first
+        enable_response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+        secret = enable_response.json()["secret"]
+
+        # Generate valid TOTP code
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        # Verify setup
+        verify_response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": code},
+        )
+
+        assert verify_response.status_code == 200
+        data = verify_response.json()
+
+        # Check response
+        assert data["success"] is True
+        assert "backup_codes" in data
+        assert len(data["backup_codes"]) == 10
+
+        # Check backup codes format
+        for code in data["backup_codes"]:
+            assert len(code) == 8
+            assert code.isdigit()
+
+    async def test_verify_2fa_setup_enables_2fa(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test that verification enables 2FA in database."""
+        # Enable 2FA
+        enable_response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+        secret = enable_response.json()["secret"]
+
+        # Generate valid TOTP code
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        # Verify setup
+        await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": code},
+        )
+
+        # Check database
+        result = await db_session.execute(
+            select(User2FA).where(User2FA.user_id == test_user.id)
+        )
+        user_2fa = result.scalar_one()
+
+        assert user_2fa.enabled is True
+        assert len(user_2fa.backup_codes) == 10
+
+    async def test_verify_2fa_setup_invalid_code(
+        self, async_client: AsyncClient, authenticated_headers
+    ):
+        """Test verification fails with invalid TOTP code."""
+        # Enable 2FA
+        await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+
+        # Try to verify with wrong code
+        verify_response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": "000000"},
+        )
+
+        assert verify_response.status_code == 401
+        data = verify_response.json()
+        assert "invalid" in data["detail"].lower()
+
+    async def test_verify_2fa_setup_no_setup_in_progress(
+        self, async_client: AsyncClient, authenticated_headers
+    ):
+        """Test verification fails when no setup in progress."""
+        response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": "123456"},
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "no 2fa setup" in data["detail"].lower()
+
+    async def test_verify_2fa_setup_already_enabled(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test verification fails when 2FA already enabled."""
+        # Create already enabled 2FA
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret="JBSWY3DPEHPK3PXP",
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Try to verify
+        response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": "123456"},
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "already enabled" in data["detail"].lower()
+
+    async def test_verify_2fa_setup_requires_authentication(
+        self, async_client: AsyncClient
+    ):
+        """Test that verify endpoint requires authentication."""
+        response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            json={"totp_code": "123456"},
+        )
+
+        assert response.status_code == 401
+
+    async def test_backup_codes_are_hashed(
+        self, async_client: AsyncClient, authenticated_headers, db_session, test_user
+    ):
+        """Test that backup codes are stored hashed."""
+        # Enable and verify 2FA
+        enable_response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+        secret = enable_response.json()["secret"]
+
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        verify_response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": code},
+        )
+
+        backup_codes = verify_response.json()["backup_codes"]
+
+        # Check database - codes should be hashed
+        result = await db_session.execute(
+            select(User2FA).where(User2FA.user_id == test_user.id)
+        )
+        user_2fa = result.scalar_one()
+
+        # Stored codes should be different from plaintext
+        for stored_code in user_2fa.backup_codes:
+            assert stored_code not in backup_codes
+            assert len(stored_code) > 50  # Argon2 hashes are long
+
+    async def test_backup_codes_unique(
+        self, async_client: AsyncClient, authenticated_headers
+    ):
+        """Test that all backup codes are unique."""
+        # Enable and verify 2FA
+        enable_response = await async_client.post(
+            "/api/v1/auth/2fa/enable",
+            headers=authenticated_headers,
+        )
+        secret = enable_response.json()["secret"]
+
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        verify_response = await async_client.post(
+            "/api/v1/auth/2fa/verify-setup",
+            headers=authenticated_headers,
+            json={"totp_code": code},
+        )
+
+        backup_codes = verify_response.json()["backup_codes"]
+
+        # All codes should be unique
+        assert len(backup_codes) == len(set(backup_codes))

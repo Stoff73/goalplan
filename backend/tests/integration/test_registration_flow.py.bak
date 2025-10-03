@@ -1,0 +1,586 @@
+"""
+Integration tests for the complete user registration flow.
+
+This module tests the end-to-end registration process including:
+- Complete happy path: register → email sent → verify → user becomes ACTIVE
+- Error scenarios: duplicate email, expired token, rate limiting
+- Load testing: 100 concurrent registrations
+
+These are integration tests that verify the entire flow works correctly
+with all components interacting together.
+
+Test Coverage:
+- Full registration flow from start to finish
+- Email verification integration
+- Rate limiting in action
+- Concurrent user registrations
+- Error handling across the entire flow
+"""
+
+import pytest
+import asyncio
+import uuid
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, patch
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from models.user import User, EmailVerificationToken, UserStatus, CountryPreference
+
+
+class TestRegistrationIntegration:
+    """Integration tests for complete user registration flow."""
+
+    @pytest.fixture(autouse=True)
+    async def reset_rate_limiter(self):
+        """Reset rate limiter before each test to avoid state leakage."""
+        from middleware.rate_limiter import limiter
+        # Reset the in-memory storage
+        if hasattr(limiter._storage, 'storage'):
+            limiter._storage.storage.clear()
+        yield
+        # Clean up after test
+        if hasattr(limiter._storage, 'storage'):
+            limiter._storage.storage.clear()
+
+    @pytest.fixture
+    def valid_registration_data(self):
+        """Provide valid registration data for tests."""
+        return {
+            "email": "integration@example.com",
+            "password": "SecurePass123!@#",
+            "first_name": "Integration",
+            "last_name": "Test",
+            "country": "UK",
+            "terms_accepted": True,
+            "marketing_consent": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_full_registration_flow(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Test complete registration flow: register → verify email → user becomes ACTIVE.
+
+        This is the happy path integration test that verifies:
+        1. User registers successfully
+        2. Verification token is created
+        3. Email would be sent (mocked)
+        4. User can verify email with token
+        5. User status changes to ACTIVE
+        6. User is fully verified
+        """
+        # Mock email service to prevent actual email sending
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock) as mock_email:
+
+            # Step 1: Register user
+            register_response = await test_client.post(
+                "/api/v1/auth/register",
+                json=valid_registration_data,
+            )
+
+            # Assert registration successful
+            assert register_response.status_code == 201
+            register_data = register_response.json()
+            assert register_data["success"] is True
+            assert "check your email" in register_data["message"].lower()
+            user_id = uuid.UUID(register_data["user_id"])
+
+            # Assert email was sent
+            mock_email.assert_called_once()
+
+            # Step 2: Get verification token from database
+            stmt = select(EmailVerificationToken).where(
+                EmailVerificationToken.user_id == user_id
+            )
+            result = await db_session.execute(stmt)
+            token_obj = result.scalar_one()
+
+            assert token_obj is not None
+            assert token_obj.used is False
+            assert token_obj.expires_at > datetime.utcnow()
+
+            # Step 3: Verify user is in PENDING_VERIFICATION status
+            stmt = select(User).where(User.id == user_id)
+            result = await db_session.execute(stmt)
+            user = result.scalar_one()
+
+            assert user.status == UserStatus.PENDING_VERIFICATION
+            assert user.email_verified is False
+
+            # Step 4: Verify email using token
+            verify_response = await test_client.get(
+                f"/api/v1/auth/verify-email?token={token_obj.token}"
+            )
+
+            # Assert verification successful
+            assert verify_response.status_code == 200
+            verify_data = verify_response.json()
+            assert verify_data["success"] is True
+            assert "verified successfully" in verify_data["message"].lower()
+
+            # Step 5: Verify user is now ACTIVE with email verified
+            await db_session.rollback()  # Refresh session
+            stmt = select(User).where(User.id == user_id)
+            result = await db_session.execute(stmt)
+            user = result.scalar_one()
+
+            assert user.status == UserStatus.ACTIVE
+            assert user.email_verified is True
+
+            # Step 6: Verify token is marked as used
+            stmt = select(EmailVerificationToken).where(
+                EmailVerificationToken.token == token_obj.token
+            )
+            result = await db_session.execute(stmt)
+            token_obj = result.scalar_one()
+            assert token_obj.used is True
+
+    @pytest.mark.asyncio
+    async def test_registration_with_duplicate_email(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Test registration flow with duplicate email.
+
+        This tests the complete flow when a user tries to register
+        with an email that already exists. The system should:
+        1. Return success (security - no user enumeration)
+        2. Not create a duplicate user
+        3. Not send a verification email to existing user
+        """
+        # Mock email service
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock) as mock_email:
+
+            # Step 1: Register first user
+            first_response = await test_client.post(
+                "/api/v1/auth/register",
+                json=valid_registration_data,
+            )
+
+            assert first_response.status_code == 201
+            first_user_id = uuid.UUID(first_response.json()["user_id"])
+
+            # Verify first email was sent
+            assert mock_email.call_count == 1
+
+            # Step 2: Try to register with same email
+            mock_email.reset_mock()  # Reset mock to track second call
+
+            second_response = await test_client.post(
+                "/api/v1/auth/register",
+                json=valid_registration_data,
+            )
+
+            # Assert: Returns success (security best practice - no enumeration)
+            assert second_response.status_code == 201
+            second_data = second_response.json()
+            assert second_data["success"] is True
+
+            # Step 3: Verify only one user exists in database
+            stmt = select(User).where(
+                User.email == valid_registration_data["email"].lower()
+            )
+            result = await db_session.execute(stmt)
+            users = result.scalars().all()
+
+            assert len(users) == 1
+            assert users[0].id == first_user_id
+
+            # Step 4: Verify no second email was sent (duplicate email detected internally)
+            # The system should detect duplicate and not send email
+            assert mock_email.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_verification_with_expired_token(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Test verification flow with expired token.
+
+        This tests the complete flow when:
+        1. User registers successfully
+        2. Token expires (24+ hours pass)
+        3. User tries to verify with expired token
+        4. System rejects verification
+        5. User remains in PENDING_VERIFICATION status
+        """
+        # Mock email service
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock):
+
+            # Step 1: Register user
+            register_response = await test_client.post(
+                "/api/v1/auth/register",
+                json=valid_registration_data,
+            )
+
+            assert register_response.status_code == 201
+            user_id = uuid.UUID(register_response.json()["user_id"])
+
+            # Step 2: Get the token and manually expire it
+            stmt = select(EmailVerificationToken).where(
+                EmailVerificationToken.user_id == user_id
+            )
+            result = await db_session.execute(stmt)
+            token_obj = result.scalar_one()
+
+            # Store token string before expiring
+            token_string = token_obj.token
+
+            # Manually expire the token (simulate 25 hours passing)
+            token_obj.expires_at = datetime.utcnow() - timedelta(hours=1)
+            await db_session.commit()
+
+            # Step 3: Try to verify with expired token
+            verify_response = await test_client.get(
+                f"/api/v1/auth/verify-email?token={token_string}"
+            )
+
+            # Assert: Verification fails with expired token error
+            assert verify_response.status_code == 400
+            error_data = verify_response.json()
+            assert "expired" in error_data["detail"].lower()
+
+            # Step 4: Verify user remains in PENDING_VERIFICATION status
+            await db_session.rollback()
+            stmt = select(User).where(User.id == user_id)
+            result = await db_session.execute(stmt)
+            user = result.scalar_one()
+
+            assert user.status == UserStatus.PENDING_VERIFICATION
+            assert user.email_verified is False
+
+            # Step 5: Verify token is not marked as used
+            stmt = select(EmailVerificationToken).where(
+                EmailVerificationToken.token == token_string
+            )
+            result = await db_session.execute(stmt)
+            token_obj_after = result.scalar_one()
+            assert token_obj_after.used is False
+
+    @pytest.mark.asyncio
+    async def test_rate_limiting_in_action(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Test rate limiting across multiple registration attempts.
+
+        This integration test verifies that:
+        1. First 5 registrations succeed
+        2. 6th registration is blocked with 429
+        3. Rate limit error has proper message
+        4. All successful registrations complete fully
+        5. Rate limiting doesn't corrupt any data
+        """
+        # Mock email service
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock):
+
+            successful_user_ids = []
+
+            # Step 1: Make 5 successful registrations
+            for i in range(5):
+                data = valid_registration_data.copy()
+                data["email"] = f"ratelimit{i}@example.com"
+
+                response = await test_client.post(
+                    "/api/v1/auth/register",
+                    json=data,
+                )
+
+                # Assert: Request succeeds
+                assert response.status_code == 201, f"Request {i+1} failed unexpectedly"
+                response_data = response.json()
+                assert response_data["success"] is True
+                successful_user_ids.append(uuid.UUID(response_data["user_id"]))
+
+            # Step 2: Verify all 5 users were created
+            for user_id in successful_user_ids:
+                stmt = select(User).where(User.id == user_id)
+                result = await db_session.execute(stmt)
+                user = result.scalar_one()
+                assert user is not None
+                assert user.status == UserStatus.PENDING_VERIFICATION
+
+            # Step 3: Make 6th request (should be rate limited)
+            data = valid_registration_data.copy()
+            data["email"] = "ratelimit6@example.com"
+
+            response = await test_client.post(
+                "/api/v1/auth/register",
+                json=data,
+            )
+
+            # Assert: 6th request is blocked with 429
+            assert response.status_code == 429
+            error_data = response.json()
+            assert "detail" in error_data
+            assert any(word in error_data["detail"].lower() for word in ["too many", "rate", "limit"])
+
+            # Step 4: Verify 6th user was NOT created
+            stmt = select(User).where(User.email == "ratelimit6@example.com")
+            result = await db_session.execute(stmt)
+            user = result.scalar_one_or_none()
+            assert user is None
+
+            # Step 5: Verify all previous users are still intact
+            stmt = select(User).where(User.id.in_(successful_user_ids))
+            result = await db_session.execute(stmt)
+            users = result.scalars().all()
+            assert len(users) == 5
+
+    @pytest.mark.asyncio
+    async def test_concurrent_registrations(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Load test: 100 sequential user registrations (simulating load).
+
+        This test verifies that the system can handle:
+        1. 100 user registration requests in quick succession
+        2. All unique emails register successfully
+        3. No race conditions or data corruption
+        4. All verification tokens created correctly
+        5. Database transactions handle the load properly
+
+        Note: This test uses different IPs to bypass rate limiting,
+        simulating realistic load from different users.
+        We run these sequentially due to SQLite test database limitations,
+        but in production with PostgreSQL, true concurrency is supported.
+        """
+        # Mock email service
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock):
+
+            num_users = 100
+
+            async def register_user(index: int) -> dict:
+                """Register a single user with unique email and IP."""
+                data = valid_registration_data.copy()
+                data["email"] = f"loadtest{index}@example.com"
+
+                # Use different IP for each user to bypass rate limiting
+                # This simulates realistic load from different users
+                headers = {"X-Forwarded-For": f"10.{index // 256}.{index % 256}.1"}
+
+                try:
+                    response = await test_client.post(
+                        "/api/v1/auth/register",
+                        json=data,
+                        headers=headers,
+                    )
+
+                    return {
+                        "index": index,
+                        "status_code": response.status_code,
+                        "response": response.json() if response.status_code == 201 else None,
+                    }
+                except Exception as e:
+                    return {
+                        "index": index,
+                        "status_code": 500,
+                        "response": None,
+                        "error": str(e),
+                    }
+
+            # Step 1: Execute registrations sequentially (SQLite limitation in tests)
+            # In production with PostgreSQL, these would be truly concurrent
+            results = []
+            for i in range(num_users):
+                result = await register_user(i)
+                results.append(result)
+
+            # Step 2: Count successes and failures
+            successful_results = []
+            failed_results = []
+
+            for result in results:
+                if result["status_code"] == 201:
+                    successful_results.append(result)
+                else:
+                    failed_results.append(result)
+
+            # Assert: All registrations should succeed (sequential execution)
+            assert len(successful_results) >= 95, \
+                f"Expected at least 95 successful registrations, got {len(successful_results)}. Failures: {len(failed_results)}"
+
+            # Step 3: Verify all successful users exist in database
+            successful_emails = [f"loadtest{r['index']}@example.com" for r in successful_results]
+
+            stmt = select(User).where(User.email.in_(successful_emails))
+            result = await db_session.execute(stmt)
+            users = result.scalars().all()
+
+            assert len(users) == len(successful_results)
+
+            # Step 4: Verify all users have verification tokens
+            user_ids = [user.id for user in users]
+            stmt = select(EmailVerificationToken).where(
+                EmailVerificationToken.user_id.in_(user_ids)
+            )
+            result = await db_session.execute(stmt)
+            tokens = result.scalars().all()
+
+            assert len(tokens) == len(users)
+
+            # Step 5: Verify all users are in PENDING_VERIFICATION status
+            for user in users:
+                assert user.status == UserStatus.PENDING_VERIFICATION
+                assert user.email_verified is False
+
+            # Step 6: Verify all tokens are valid (not expired, not used)
+            for token in tokens:
+                assert token.used is False
+                assert token.expires_at > datetime.utcnow()
+
+            # Step 7: Verify no duplicate users created
+            stmt = select(User.email).where(User.email.like("loadtest%@example.com"))
+            result = await db_session.execute(stmt)
+            emails = result.scalars().all()
+
+            # Check for uniqueness
+            assert len(emails) == len(set(emails)), "Duplicate users detected"
+
+    @pytest.mark.asyncio
+    async def test_complete_flow_with_idempotent_verification(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Test complete flow with multiple verification attempts (idempotency).
+
+        This tests:
+        1. User registers
+        2. User verifies email
+        3. User clicks verification link again
+        4. System handles gracefully (idempotent)
+        """
+        # Mock email service
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock):
+
+            # Step 1: Register user
+            register_response = await test_client.post(
+                "/api/v1/auth/register",
+                json=valid_registration_data,
+            )
+
+            assert register_response.status_code == 201
+            user_id = uuid.UUID(register_response.json()["user_id"])
+
+            # Step 2: Get verification token
+            stmt = select(EmailVerificationToken).where(
+                EmailVerificationToken.user_id == user_id
+            )
+            result = await db_session.execute(stmt)
+            token_obj = result.scalar_one()
+
+            # Step 3: First verification
+            verify_response1 = await test_client.get(
+                f"/api/v1/auth/verify-email?token={token_obj.token}"
+            )
+
+            assert verify_response1.status_code == 200
+            assert "verified successfully" in verify_response1.json()["message"].lower()
+
+            # Step 4: Second verification (idempotent)
+            await db_session.rollback()  # Refresh session
+
+            verify_response2 = await test_client.get(
+                f"/api/v1/auth/verify-email?token={token_obj.token}"
+            )
+
+            # Assert: Second verification returns success (idempotent)
+            assert verify_response2.status_code == 200
+            assert "already been verified" in verify_response2.json()["message"].lower()
+
+            # Step 5: Verify user is still ACTIVE
+            stmt = select(User).where(User.id == user_id)
+            result = await db_session.execute(stmt)
+            user = result.scalar_one()
+
+            assert user.status == UserStatus.ACTIVE
+            assert user.email_verified is True
+
+    @pytest.mark.asyncio
+    async def test_registration_flow_data_integrity(
+        self,
+        test_client: AsyncClient,
+        db_session: AsyncSession,
+        valid_registration_data: dict,
+    ):
+        """
+        Test that registration flow maintains data integrity.
+
+        This verifies:
+        1. Email stored in lowercase
+        2. Password is hashed (Argon2)
+        3. Names are trimmed
+        4. Timestamps are set correctly
+        5. Country preference stored correctly
+        6. Marketing consent stored correctly
+        """
+        # Mock email service
+        with patch("api.v1.auth.registration.email_service.send_verification_email", new_callable=AsyncMock):
+
+            # Step 1: Register with mixed case email and whitespace in names
+            data = valid_registration_data.copy()
+            data["email"] = "DataIntegrity@EXAMPLE.COM"
+            data["first_name"] = "  John  "
+            data["last_name"] = "  Doe  "
+            data["marketing_consent"] = True
+
+            register_response = await test_client.post(
+                "/api/v1/auth/register",
+                json=data,
+            )
+
+            assert register_response.status_code == 201
+            user_id = uuid.UUID(register_response.json()["user_id"])
+
+            # Step 2: Verify data integrity in database
+            stmt = select(User).where(User.id == user_id)
+            result = await db_session.execute(stmt)
+            user = result.scalar_one()
+
+            # Email should be lowercase
+            assert user.email == "dataintegrity@example.com"
+
+            # Names should be trimmed
+            assert user.first_name == "John"
+            assert user.last_name == "Doe"
+
+            # Password should be hashed with Argon2
+            assert user.password_hash != data["password"]
+            assert user.password_hash.startswith("$argon2")
+
+            # Country preference should be stored
+            assert user.country_preference == CountryPreference.UK
+
+            # Marketing consent should be stored
+            assert user.marketing_consent is True
+
+            # Timestamps should be set
+            assert user.created_at is not None
+            assert user.updated_at is not None
+            assert user.terms_accepted_at is not None
+
+            # Status should be PENDING_VERIFICATION
+            assert user.status == UserStatus.PENDING_VERIFICATION
+            assert user.email_verified is False

@@ -8,6 +8,54 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Key Value Proposition:** Single platform eliminating the complexity of managing finances across two tax jurisdictions.
 
+---
+
+## ⚠️ CRITICAL: Mandatory Testing Protocol
+
+**RULE: NO CODE CHANGE IS COMPLETE WITHOUT BROWSER TESTING**
+
+After making ANY code change affecting the application:
+
+1. **Restart services** (if backend changes):
+   ```bash
+   ./stop.sh && ./start.sh
+   ```
+
+2. **Wait for startup** (5-10 seconds)
+
+3. **Open browser** to http://localhost:5173
+
+4. **Test affected pages** manually
+
+5. **Check browser console** (F12) for JavaScript errors
+
+6. **Check Network tab** for failed API requests (404, 500, etc.)
+
+7. **Verify functionality** actually works as expected
+
+8. **ONLY THEN** mark task complete
+
+**Why This Is Mandatory:**
+- Code can compile successfully but still break the application
+- Type annotations can be wrong even if syntax is correct
+- Backend logs show requests but NOT whether the app actually works
+- **Real Example:** Bug #18 was discovered by user after API fixes because browser testing was skipped
+  - Code compiled ✓
+  - Backend logs clean ✓
+  - Did NOT test browser ✗
+  - Result: Tax Status and Income pages completely broken (500 errors) ✗
+  - User unable to use core functionality ✗
+
+**This testing protocol applies to:**
+- All code changes (backend and frontend)
+- All agent-delegated work (verify their work in browser)
+- All bug fixes (verify the fix works in browser)
+- All new features (verify they work in browser)
+
+See `.claude/instructions.md` and `BUG_FIX_SUMMARY.md` for detailed lessons learned.
+
+---
+
 ## Architecture
 
 ### Modular Design Philosophy
@@ -35,6 +83,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Testing:** pytest (backend), Jest (frontend components), Playwright (E2E flows)
 - **Package Management:** pip (backend)
 - **UI Components:** Import from 'internal-packages/ui' (NOT '@/components/ui')
+- **Design System:** Follow `STYLEGUIDE.md` for all UI/UX implementation
 
 ## Development Workflow
 
@@ -61,6 +110,20 @@ Development is organized into 5 phases, each building on the previous:
 ### Agent Delegation
 Tasks are delegated to specialized agents:
 
+**⚠️ CRITICAL QUALITY CONTROL PROCESS:**
+
+All agent work MUST be verified before acceptance:
+1. **Run actual tests** - Do NOT trust agent reports of passing tests
+2. **Verify code quality** - Read implementation to ensure spec compliance
+3. **Re-delegate if needed** - Send work back with specific fix instructions if:
+   - Tests fail
+   - Code quality is poor
+   - Specifications not followed
+4. **Repeat until perfect** - Continue verification cycle until 100% pass rate
+5. **Never mark complete** without personal verification
+
+This is MANDATORY for all delegated work. See `.claude/instructions.md` for detailed workflow.
+
 **🐍 Python Backend Tasks → `python-backend-engineer` agent**
 - API endpoints (FastAPI)
 - Database models (SQLAlchemy) and migrations (Alembic)
@@ -71,11 +134,60 @@ Tasks are delegated to specialized agents:
 
 **⚛️ React Frontend Tasks → `react-coder` agent**
 - React 19 components (no forwardRef)
-- UI/UX implementation
+- UI/UX implementation following `STYLEGUIDE.md`
 - Forms and validation
 - State management (Context API)
 - Component testing with Jest
 - **ALWAYS import from 'internal-packages/ui'**
+- **MANDATORY: Follow narrative storytelling approach from STYLEGUIDE.md**
+
+## UI/UX Design System (MANDATORY)
+
+### Style Guide Compliance
+**⚠️ CRITICAL: All frontend work MUST follow `/Users/CSJ/Desktop/goalplan/STYLEGUIDE.md`**
+
+**Key Requirements:**
+1. **Narrative Storytelling Approach**
+   - Use conversational language: "You're worth £325,000" NOT "Net Worth: £325,000"
+   - Explain the "why" behind every number
+   - Embed metrics in sentences, not standalone displays
+   - 2-3 sentence paragraphs maximum
+   - Line height 1.7 for narrative text
+
+2. **Visual Design**
+   - Narrative section cards with 32px padding
+   - 48-64px spacing between major sections
+   - Border radius: 12px for cards
+   - Shadow: subtle (shadow-sm)
+   - Generous white space for readability
+
+3. **Typography**
+   - Page headlines: Bold, conversational status (e.g., "Your Financial Health: Strong")
+   - Body text: 16px, line-height 1.7, text-secondary color
+   - Metrics: Monospace font, embedded in sentences with <strong> tags
+   - No uppercase labels, use normal case
+
+4. **Progressive Disclosure**
+   - "Tell me more" expandable sections for details
+   - Callout boxes for tips/warnings with colored backgrounds
+   - Clear "What to do next" action sections
+   - Complexity is optional, not default
+
+5. **Color Usage**
+   - Primary: #2563EB (blue for actions/links)
+   - Success: #10B981 (green for positive metrics)
+   - Warning: #F59E0B (amber for attention)
+   - Error: #EF4444 (red for negative/alerts)
+   - Text: #0F172A (primary), #475569 (secondary), #94A3B8 (tertiary)
+
+**Before Implementing ANY Frontend Feature:**
+- [ ] Read STYLEGUIDE.md section relevant to component type
+- [ ] Use narrative storytelling, not data display
+- [ ] Implement responsive design (mobile-first)
+- [ ] Add dark mode support
+- [ ] Include progressive disclosure patterns
+- [ ] Test with keyboard navigation
+- [ ] Ensure WCAG AA accessibility
 
 ## Documentation Structure
 
@@ -181,15 +293,33 @@ Detailed feature specs are in sharded markdown files in project root:
 
 ### Backend
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# ⚠️ CRITICAL: Always use .venv Python (3.12.11), NOT system python3 (3.9.6)
+# Virtual environment is at PROJECT ROOT: .venv/
+#
+# Two ways to run Python commands:
+# 1. Activate venv (from project root):
+source .venv/bin/activate
+python --version  # Should show 3.12.11
+
+# 2. Use full path (RECOMMENDED for scripts/tests):
+/Users/CSJ/Desktop/goalplan/.venv/bin/python --version
+
+# Install dependencies (from project root)
+pip install -r backend/requirements.txt
+
+# Navigate to backend directory
+cd backend
 
 # Run database migrations
 alembic upgrade head
 
-# Run tests
-pytest tests/ -v
-pytest tests/api/auth/test_registration.py -v
+# Run tests - ALWAYS use .venv Python:
+/Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/ -v
+/Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/api/auth/test_registration.py -v
+
+# Or after activating venv:
+python -m pytest tests/ -v
+python -m pytest tests/api/auth/test_registration.py -v
 
 # Run linting
 black .
@@ -197,7 +327,10 @@ isort .
 mypy .
 
 # Start backend server
-uvicorn main:app --reload
+python -m uvicorn main:app --reload
+
+# Verify Python version (should show 3.12.x, NOT 3.9.6)
+python --version
 ```
 
 ### Frontend
@@ -230,6 +363,11 @@ npm run build
 - **Avoid useEffect** - Use React 19's built-in solutions where possible
 - **Import UI components:** ALWAYS from 'internal-packages/ui'
 - Keep components simple, functional, and obvious
+- **CRITICAL:** Follow `STYLEGUIDE.md` for all design patterns, components, and UX
+  - Narrative storytelling approach (conversational, educational tone)
+  - Generous white space and readability
+  - Progressive disclosure patterns
+  - Accessibility standards (WCAG 2.1 Level AA)
 
 ### API Endpoints
 - RESTful design
@@ -283,13 +421,59 @@ Individual becomes deemed domiciled if:
 - **SOLID principles:** Clean architecture, separation of concerns
 - **Security:** Always validate input, sanitize output, use parameterized queries
 
+## Design System & UI/UX
+
+**CRITICAL:** All UI/UX work MUST follow `STYLEGUIDE.md`
+
+### Narrative Storytelling Approach
+- Use conversational, second-person language ("you", "your")
+- Explain the "why" behind every number
+- Lead with plain-language narratives, not raw data
+- Example: "You're worth **£325,000** after debts" NOT "Net Worth: £325,000"
+
+### Key Design Principles
+1. **Storytelling Over Data Display** - Numbers support the story, don't replace it
+2. **Educational by Default** - Teach users through use, explain technical terms
+3. **Empowerment Through Understanding** - Help users understand recommendations
+4. **Conversational & Human Tone** - Write like a trusted advisor
+5. **Generous White Space** - Text-focused design requires excellent readability
+6. **Progressive Disclosure** - Start simple, complexity is optional
+
+### Component Guidelines
+- Import UI components from 'internal-packages/ui'
+- Use NarrativeSection cards for story sections
+- Embed metrics in sentences, not standalone
+- Use Callout boxes for tips/warnings
+- Implement "Tell me more" expandable sections
+- Line height 1.7 for narrative text
+- 32px padding for narrative cards
+- 48-64px spacing between sections
+
+### Color & Typography
+- Primary: #2563EB (professional blue)
+- Success: #10B981 (green for positive metrics)
+- Warning: #F59E0B (amber for attention)
+- Error: #EF4444 (red for negative values)
+- Font: System fonts (-apple-system, BlinkMacSystemFont, "Segoe UI", "Inter")
+- Monospace for currency values
+
+### Accessibility Requirements
+- WCAG 2.1 Level AA compliance
+- Keyboard navigation for all interactive elements
+- Screen reader support (semantic HTML, ARIA labels)
+- 4.5:1 color contrast minimum
+- Focus indicators required
+
+**See `STYLEGUIDE.md` for complete specifications**
+
 ## Before Starting Work
 
 1. **Read `.claude/instructions.md`** - Complete development workflow and rules
-2. **Check current phase** - Look at `TASKS_README.md` for current status
-3. **Review feature specs** - Read relevant shard files for task context
-4. **Verify tests pass** - Run existing test suite before making changes
-5. **Plan delegation** - Identify which agent should handle the work
+2. **Read `STYLEGUIDE.md`** - Design system and UI/UX patterns (for frontend work)
+3. **Check current phase** - Look at `TASKS_README.md` for current status
+4. **Review feature specs** - Read relevant shard files for task context
+5. **Verify tests pass** - Run existing test suite before making changes
+6. **Plan delegation** - Identify which agent should handle the work
 
 ## Resources
 

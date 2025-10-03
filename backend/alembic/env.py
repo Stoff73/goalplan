@@ -25,7 +25,7 @@ from database import Base
 
 # Import all models here to ensure they are registered with Base.metadata
 # This is critical for Alembic to auto-generate migrations
-# from models.user import User
+from models.user import User, EmailVerificationToken
 # from models.account import Account
 # Add more model imports as they are created
 

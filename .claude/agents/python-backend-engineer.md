@@ -18,6 +18,27 @@ Implement authentication, authorization, and security best practices
 Write comprehensive unit and integration tests using pytest
 Optimize performance through profiling, caching strategies, and async programming
 Set up proper logging, monitoring, and error tracking
+
+⚠️ CRITICAL: Python Version and Environment
+
+Always use the virtual environment's Python 3.12.11 for all operations:
+
+- NEVER use python3 command (uses system Python 3.9.6)
+- Virtual environment is at PROJECT ROOT: /Users/CSJ/Desktop/goalplan/.venv (note the dot prefix)
+- Two options for running Python:
+
+  **Option A - Full path (RECOMMENDED for tests):**
+  - /Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/ -v
+  - /Users/CSJ/Desktop/goalplan/.venv/bin/python -m uvicorn main:app
+  - /Users/CSJ/Desktop/goalplan/.venv/bin/python --version (should show 3.12.11)
+
+  **Option B - Activate venv first:**
+  - source .venv/bin/activate (from project root)
+  - Then use python command (not python3) which will use .venv's Python 3.12.11
+  - Test: python -m pytest tests/ -v
+  - Run: python -m uvicorn main:app
+  - Verify: python --version (should show 3.12.11)
+
 Your development approach:
 
 Always start by understanding the business requirements and technical constraints

@@ -1,0 +1,460 @@
+"""
+Tests for login with 2FA.
+
+Tests cover:
+- Login without 2FA works as before (backward compatibility)
+- Login with 2FA requires code
+- Login with valid TOTP code succeeds
+- Login with invalid TOTP code fails
+- Login with backup code succeeds
+- Backup code single use (cannot reuse)
+- Login with expired TOTP code
+- 2FA requirement in response format
+"""
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy import select
+
+from models import User2FA
+from services.totp import TOTPService
+
+
+@pytest.fixture(autouse=True)
+async def reset_rate_limiter():
+    """Reset rate limiter before each test to avoid state leakage."""
+    from middleware.rate_limiter import limiter
+    # Reset the in-memory storage
+    if hasattr(limiter._storage, 'storage'):
+        limiter._storage.storage.clear()
+    yield
+    # Clean up after test
+    if hasattr(limiter._storage, 'storage'):
+        limiter._storage.storage.clear()
+
+
+@pytest.mark.asyncio
+class TestLoginWithout2FA:
+    """Test backward compatibility - login without 2FA."""
+
+    async def test_login_without_2fa_works(
+        self, async_client: AsyncClient, test_user
+    ):
+        """Test that users without 2FA can login normally."""
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should get tokens
+        assert "accessToken" in data
+        assert "refreshToken" in data
+        assert data["user"]["twoFactorEnabled"] is False
+
+    async def test_login_without_2fa_returns_correct_status(
+        self, async_client: AsyncClient, test_user
+    ):
+        """Test that 2FA status is correctly reflected in response."""
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["twoFactorEnabled"] is False
+
+
+@pytest.mark.asyncio
+class TestLogin2FARequired:
+    """Test login when 2FA is enabled but code not provided."""
+
+    async def test_login_2fa_required_response(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test that login returns 2FA required when code not provided."""
+        # Enable 2FA
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret="JBSWY3DPEHPK3PXP",
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Login without TOTP code
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should get 2FA required response (no tokens)
+        assert data["requires2fa"] is True
+        assert "message" in data
+        assert "accessToken" not in data
+        assert "refreshToken" not in data
+
+    async def test_login_2fa_required_message(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test 2FA required response message."""
+        # Enable 2FA
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret="JBSWY3DPEHPK3PXP",
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+            },
+        )
+
+        data = response.json()
+        assert "2fa" in data["message"].lower()
+
+
+@pytest.mark.asyncio
+class TestLoginWithTOTP:
+    """Test login with TOTP codes."""
+
+    async def test_login_with_valid_totp_code(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test successful login with valid TOTP code."""
+        # Enable 2FA
+        secret = TOTPService.generate_secret()
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Generate valid TOTP code
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        # Login with TOTP code
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": code,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should get tokens
+        assert "accessToken" in data
+        assert "refreshToken" in data
+        assert data["user"]["twoFactorEnabled"] is True
+
+    async def test_login_with_invalid_totp_code(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test login fails with invalid TOTP code."""
+        # Enable 2FA
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret="JBSWY3DPEHPK3PXP",
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Login with invalid code
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": "000000",
+            },
+        )
+
+        assert response.status_code == 401
+        data = response.json()
+        assert "invalid" in data["detail"].lower() or "expired" in data["detail"].lower()
+
+    async def test_login_updates_last_used_at(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test that successful 2FA login updates last_used_at."""
+        # Enable 2FA
+        secret = TOTPService.generate_secret()
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Generate valid TOTP code
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        # Login with TOTP code
+        await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": code,
+            },
+        )
+
+        # Check last_used_at was updated
+        await db_session.refresh(user_2fa)
+        assert user_2fa.last_used_at is not None
+
+
+@pytest.mark.asyncio
+class TestLoginWithBackupCode:
+    """Test login with backup codes."""
+
+    async def test_login_with_valid_backup_code(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test successful login with backup code."""
+        # Enable 2FA with backup codes
+        secret = TOTPService.generate_secret()
+        backup_codes_plain = TOTPService.generate_backup_codes()
+        backup_codes_hashed = [
+            TOTPService.hash_backup_code(code) for code in backup_codes_plain
+        ]
+
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=backup_codes_hashed,
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Login with backup code
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": backup_codes_plain[0],  # Use first backup code
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Should get tokens
+        assert "accessToken" in data
+        assert "refreshToken" in data
+
+    async def test_backup_code_removed_after_use(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test that backup code is removed after successful use."""
+        # Enable 2FA with backup codes
+        secret = TOTPService.generate_secret()
+        backup_codes_plain = TOTPService.generate_backup_codes()
+        backup_codes_hashed = [
+            TOTPService.hash_backup_code(code) for code in backup_codes_plain
+        ]
+
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=backup_codes_hashed,
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        initial_count = len(backup_codes_hashed)
+
+        # Login with backup code
+        await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": backup_codes_plain[0],
+            },
+        )
+
+        # Check backup codes count decreased
+        await db_session.refresh(user_2fa)
+        assert len(user_2fa.backup_codes) == initial_count - 1
+
+    async def test_backup_code_cannot_be_reused(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test that used backup code cannot be used again."""
+        # Enable 2FA with backup codes
+        secret = TOTPService.generate_secret()
+        backup_codes_plain = TOTPService.generate_backup_codes()
+        backup_codes_hashed = [
+            TOTPService.hash_backup_code(code) for code in backup_codes_plain
+        ]
+
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=backup_codes_hashed,
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Login with backup code (first time - should succeed)
+        response1 = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": backup_codes_plain[0],
+            },
+        )
+        assert response1.status_code == 200
+
+        # Try to use same backup code again (should fail)
+        response2 = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": backup_codes_plain[0],
+            },
+        )
+        assert response2.status_code == 401
+
+    async def test_login_with_invalid_backup_code(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test login fails with invalid backup code."""
+        # Enable 2FA with backup codes
+        secret = TOTPService.generate_secret()
+        backup_codes_plain = TOTPService.generate_backup_codes()
+        backup_codes_hashed = [
+            TOTPService.hash_backup_code(code) for code in backup_codes_plain
+        ]
+
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=backup_codes_hashed,
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Login with invalid backup code
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": "00000000",  # Invalid backup code
+            },
+        )
+
+        assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+class TestLoginAttemptLogging:
+    """Test that login attempts with 2FA are logged correctly."""
+
+    async def test_failed_2fa_login_is_logged(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test that failed 2FA attempts are logged."""
+        # Enable 2FA
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret="JBSWY3DPEHPK3PXP",
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Login with invalid code
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "SecurePass123!",
+                "totp_code": "000000",
+            },
+        )
+
+        assert response.status_code == 401
+        # Login attempt logging is tested in test_login.py
+
+
+@pytest.mark.asyncio
+class TestLoginPasswordStillRequired:
+    """Test that password is still required even with 2FA."""
+
+    async def test_login_requires_password_with_2fa(
+        self, async_client: AsyncClient, test_user, db_session
+    ):
+        """Test that valid TOTP code alone is not enough without password."""
+        # Enable 2FA
+        secret = TOTPService.generate_secret()
+        user_2fa = User2FA(
+            user_id=test_user.id,
+            secret=secret,
+            enabled=True,
+            backup_codes=[],
+        )
+        db_session.add(user_2fa)
+        await db_session.commit()
+
+        # Generate valid TOTP code
+        totp = TOTPService.generate_totp(secret)
+        code = totp.now()
+
+        # Try to login with TOTP code but wrong password
+        response = await async_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user.email,
+                "password": "WrongPassword123!",
+                "totp_code": code,
+            },
+        )
+
+        # Should fail due to wrong password
+        assert response.status_code == 401

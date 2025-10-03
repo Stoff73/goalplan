@@ -183,7 +183,7 @@ goalplan/
 ## Technology Stack (Confirmed)
 
 ### Backend
-- **Language:** Python 3.11+
+- **Language:** Python 3.12+ (3.12.11)
 - **Framework:** FastAPI 0.109.0
 - **Database:** PostgreSQL 15+ (configuration ready)
 - **Cache:** Redis 7+ (configuration ready)

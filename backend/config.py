@@ -62,12 +62,16 @@ class Settings(BaseSettings):
     REDIS_DB: int = Field(default=0, description="Redis database number")
     REDIS_MAX_CONNECTIONS: int = Field(default=10, description="Redis connection pool size")
 
-    # Security - JWT
-    JWT_SECRET_KEY: str = Field(
-        default="CHANGE_ME_IN_PRODUCTION_USE_STRONG_SECRET",
-        description="Secret key for JWT signing (use RS256 private key in production)"
+    # Security - JWT (RS256 with asymmetric keys)
+    JWT_ALGORITHM: str = Field(default="RS256", description="JWT algorithm (RS256 for asymmetric signing)")
+    JWT_PRIVATE_KEY_PATH: str = Field(
+        default="keys/jwt_private_key.pem",
+        description="Path to RSA private key for JWT signing"
     )
-    JWT_ALGORITHM: str = Field(default="HS256", description="JWT algorithm (use RS256 in production)")
+    JWT_PUBLIC_KEY_PATH: str = Field(
+        default="keys/jwt_public_key.pem",
+        description="Path to RSA public key for JWT verification"
+    )
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, description="Access token expiration")
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, description="Refresh token expiration")
 
@@ -87,6 +91,32 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: Optional[str] = Field(
         default=None,
         description="Encryption key for sensitive data (AES-256)"
+    )
+
+    # Email Configuration
+    EMAIL_BACKEND: str = Field(
+        default="console",
+        description="Email backend: 'sendgrid' or 'console' (development)"
+    )
+    SENDGRID_API_KEY: Optional[str] = Field(
+        default=None,
+        description="SendGrid API key for email sending"
+    )
+    EMAIL_FROM_ADDRESS: str = Field(
+        default="noreply@goalplan.com",
+        description="From email address"
+    )
+    EMAIL_FROM_NAME: str = Field(
+        default="GoalPlan",
+        description="From name for emails"
+    )
+    FRONTEND_URL: str = Field(
+        default="http://localhost:3000",
+        description="Frontend URL for email links"
+    )
+    REQUIRE_EMAIL_VERIFICATION: bool = Field(
+        default=False,
+        description="Require email verification before login (set to False for development)"
     )
 
     @property
@@ -153,10 +183,9 @@ class Settings(BaseSettings):
     @field_validator("JWT_ALGORITHM")
     @classmethod
     def validate_jwt_algorithm(cls, v: str) -> str:
-        """Validate JWT algorithm."""
-        allowed = ["HS256", "RS256"]
-        if v not in allowed:
-            raise ValueError(f"JWT algorithm must be one of: {', '.join(allowed)}")
+        """Validate JWT algorithm - must be RS256 for security."""
+        if v != "RS256":
+            raise ValueError("JWT algorithm must be RS256 (asymmetric signing required per CLAUDE.md)")
         return v
 
     @field_validator("PASSWORD_HASH_ALGORITHM")
@@ -174,6 +203,66 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if running in development environment."""
         return self.ENVIRONMENT == "development"
+
+    def get_jwt_private_key(self) -> str:
+        """
+        Load JWT private key from file.
+
+        Returns:
+            str: PEM-encoded RSA private key
+
+        Raises:
+            FileNotFoundError: If private key file not found
+            ValueError: If key file is empty or invalid
+        """
+        import os
+        from pathlib import Path
+
+        # Get absolute path to key file
+        base_dir = Path(__file__).parent
+        key_path = base_dir / self.JWT_PRIVATE_KEY_PATH
+
+        if not key_path.exists():
+            raise FileNotFoundError(
+                f"JWT private key not found at {key_path}. "
+                "Run key generation script to create keys."
+            )
+
+        private_key = key_path.read_text()
+        if not private_key:
+            raise ValueError(f"JWT private key file is empty: {key_path}")
+
+        return private_key
+
+    def get_jwt_public_key(self) -> str:
+        """
+        Load JWT public key from file.
+
+        Returns:
+            str: PEM-encoded RSA public key
+
+        Raises:
+            FileNotFoundError: If public key file not found
+            ValueError: If key file is empty or invalid
+        """
+        import os
+        from pathlib import Path
+
+        # Get absolute path to key file
+        base_dir = Path(__file__).parent
+        key_path = base_dir / self.JWT_PUBLIC_KEY_PATH
+
+        if not key_path.exists():
+            raise FileNotFoundError(
+                f"JWT public key not found at {key_path}. "
+                "Run key generation script to create keys."
+            )
+
+        public_key = key_path.read_text()
+        if not public_key:
+            raise ValueError(f"JWT public key file is empty: {key_path}")
+
+        return public_key
 
 
 # Global settings instance

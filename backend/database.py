@@ -16,29 +16,40 @@ Security features:
 
 from typing import AsyncGenerator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool, QueuePool
 
 from config import settings
 
 
 # Create async engine with connection pooling
-# Use NullPool for testing, QueuePool for production
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DATABASE_ECHO,
-    pool_pre_ping=True,  # Verify connections before using
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    pool_recycle=settings.DATABASE_POOL_RECYCLE,  # Recycle connections after 1 hour
-    poolclass=QueuePool if not settings.TESTING else NullPool,
-    connect_args={
-        "server_settings": {"jit": "off"},  # Disable JIT for better performance with small queries
-        "command_timeout": 60,  # Query timeout in seconds
-        "statement_cache_size": 0 if settings.TESTING else 100,  # Prepared statement cache
-    } if not settings.DATABASE_URL.startswith("sqlite") else {},
-)
+# Use NullPool for testing (SQLite), QueuePool for production (PostgreSQL)
+if settings.DATABASE_URL.startswith("sqlite"):
+    # SQLite configuration (for testing)
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        poolclass=NullPool,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    # PostgreSQL configuration (for development/production)
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        pool_pre_ping=True,  # Verify connections before using
+        pool_size=settings.DATABASE_POOL_SIZE,
+        max_overflow=settings.DATABASE_MAX_OVERFLOW,
+        pool_recycle=settings.DATABASE_POOL_RECYCLE,  # Recycle connections after 1 hour
+        poolclass=QueuePool,
+        connect_args={
+            "server_settings": {"jit": "off"},  # Disable JIT for better performance with small queries
+            "command_timeout": 60,  # Query timeout in seconds
+            "statement_cache_size": 0 if settings.TESTING else 100,  # Prepared statement cache
+        },
+    )
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
@@ -111,7 +122,7 @@ async def check_db_connection() -> bool:
     """
     try:
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
         print(f"Database connection failed: {e}")

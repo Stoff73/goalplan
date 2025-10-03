@@ -12,7 +12,7 @@ GoalPlan requires a robust technology stack for building a dual-country financia
 We have selected the following technology stack:
 
 ### Backend
-- **Python 3.11+** with **FastAPI**: Modern async framework with excellent performance and automatic API documentation
+- **Python 3.12+** with **FastAPI**: Modern async framework with excellent performance and automatic API documentation
 - **PostgreSQL 15+**: Robust relational database with strong ACID compliance for financial data
 - **Redis 7+**: High-performance caching and session management
 - **SQLAlchemy 2.0**: Async ORM with comprehensive features

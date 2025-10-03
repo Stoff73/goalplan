@@ -109,11 +109,24 @@ async def log_requests(request: Request, call_next):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors."""
-    logger.error(f"Validation error: {exc.errors()}")
+    # Convert errors to JSON-serializable format
+    errors = []
+    for error in exc.errors():
+        error_dict = {
+            "loc": error.get("loc", []),
+            "msg": error.get("msg", ""),
+            "type": error.get("type", ""),
+        }
+        # Convert ctx values to strings if present
+        if "ctx" in error:
+            error_dict["ctx"] = {k: str(v) for k, v in error["ctx"].items()}
+        errors.append(error_dict)
+
+    logger.error(f"Validation error: {errors}")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": exc.errors(),
+            "detail": errors,
             "message": "Validation error",
         },
     )
@@ -178,11 +191,16 @@ async def root():
     }
 
 
-# API v1 routes will be added here in Phase 1
-# Example:
-# from api.v1 import auth, users
-# app.include_router(auth.router, prefix=settings.API_V1_PREFIX, tags=["Authentication"])
-# app.include_router(users.router, prefix=settings.API_V1_PREFIX, tags=["Users"])
+# API v1 routes
+from api.v1.auth import router as auth_router
+from api.v1.user import router as user_router
+from api.v1.dashboard import router as dashboard_router
+from api.v1.savings import router as savings_router
+
+app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth")
+app.include_router(user_router, prefix=f"{settings.API_V1_PREFIX}/user")
+app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)
+app.include_router(savings_router, prefix=f"{settings.API_V1_PREFIX}/savings")
 
 
 if __name__ == "__main__":

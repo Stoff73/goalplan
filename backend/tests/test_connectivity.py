@@ -14,8 +14,8 @@ These tests verify:
 import pytest
 from sqlalchemy import text
 
-from backend.database import check_db_connection
-from backend.redis_client import RedisClient
+from database import check_db_connection
+from redis_client import RedisClient
 
 
 class TestDatabaseConnectivity:
@@ -285,7 +285,7 @@ class TestDatabaseIntegration:
         This test verifies that the SQLAlchemy Base
         is properly configured and ready for models.
         """
-        from backend.database import Base
+        from database import Base
 
         assert Base is not None
         assert hasattr(Base, "metadata")
@@ -302,7 +302,7 @@ class TestConfigurationSettings:
         This test verifies that the configuration
         properly constructs database connection URLs.
         """
-        from backend.config import settings
+        from config import settings
 
         assert settings.DATABASE_URL is not None
         # In testing mode, should use SQLite
@@ -315,7 +315,7 @@ class TestConfigurationSettings:
         This test verifies that the configuration
         properly constructs Redis connection URLs.
         """
-        from backend.config import settings
+        from config import settings
 
         assert settings.REDIS_URL is not None
         assert settings.REDIS_URL.startswith("redis://")
@@ -327,7 +327,7 @@ class TestConfigurationSettings:
         This test verifies critical security settings
         from CLAUDE.md requirements.
         """
-        from backend.config import settings
+        from config import settings
 
         # Password hashing must be Argon2
         assert settings.PASSWORD_HASH_ALGORITHM == "argon2"

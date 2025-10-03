@@ -19,7 +19,7 @@ GoalPlan eliminates the complexity of managing finances across two tax jurisdict
 ## Tech Stack
 
 ### Backend
-- **Framework:** FastAPI (Python 3.11+)
+- **Framework:** FastAPI (Python 3.12+)
 - **Database:** PostgreSQL 15+
 - **Cache/Sessions:** Redis 7+
 - **ORM:** SQLAlchemy 2.0

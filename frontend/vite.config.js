@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      'internal-packages-ui': path.resolve(__dirname, '../internal-packages/ui/src'),
+      'internal-packages/ui': path.resolve(__dirname, '../internal-packages/ui/src'),
     },
   },
   server: {

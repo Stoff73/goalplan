@@ -1,0 +1,156 @@
+FRONTEND AUTHENTICATION UI - FILE STRUCTURE
+============================================
+
+frontend/
+│
+├── src/
+│   ├── components/
+│   │   └── auth/
+│   │       ├── RegistrationForm.jsx       [Task 1.4.1] - Registration with validation
+│   │       ├── EmailVerification.jsx      [Task 1.4.2] - Email verification flow
+│   │       ├── LoginForm.jsx              [Task 1.4.3 + 1.4.5] - Login + 2FA
+│   │       ├── TwoFactorSetup.jsx         [Task 1.4.4] - 2FA setup wizard
+│   │       └── LogoutButton.jsx           [Task 1.4.6] - Logout functionality
+│   │
+│   ├── pages/
+│   │   ├── RegisterPage.jsx               - Registration page wrapper
+│   │   ├── LoginPage.jsx                  - Login page wrapper
+│   │   ├── VerifyEmailPage.jsx            - Email verification page
+│   │   ├── Setup2FAPage.jsx               - 2FA setup page
+│   │   └── DashboardPage.jsx              - Protected dashboard
+│   │
+│   └── utils/
+│       ├── auth.js                        - Token mgmt, validation, password checks
+│       └── api.js                         - API client, endpoint wrappers
+│
+├── tests/
+│   └── components/
+│       ├── RegistrationForm.test.jsx      [12 tests] - Form validation, API, errors
+│       ├── EmailVerification.test.jsx     [7 tests]  - Verification flow
+│       ├── LoginForm.test.jsx             [11 tests] - Login, 2FA, errors
+│       ├── TwoFactorSetup.test.jsx        [11 tests] - 2FA setup, backup codes
+│       └── LogoutButton.test.jsx          [9 tests]  - Logout functionality
+│
+├── e2e/
+│   ├── registration.spec.js               [9 tests]  - Complete registration flow
+│   ├── login.spec.js                      [7 tests]  - Login flow
+│   ├── login-with-2fa.spec.js             [6 tests]  - 2FA login flow
+│   ├── email-verification.spec.js         [6 tests]  - Email verification
+│   ├── 2fa-setup.spec.js                  [8 tests]  - 2FA setup flow
+│   └── logout.spec.js                     [5 tests]  - Logout flow
+│
+├── playwright.config.js                   - Playwright configuration
+├── package.json                           - Updated with Playwright & scripts
+├── AUTH_UI_IMPLEMENTATION_REPORT.md       - Detailed implementation report
+├── IMPLEMENTATION_SUMMARY.md              - Quick reference summary
+└── FILE_STRUCTURE.txt                     - This file
+
+
+internal-packages/ui/src/
+│
+├── Button.jsx                             - Reusable button (primary, secondary, outline, danger)
+├── Input.jsx                              - Text input with error display
+├── Label.jsx                              - Form label with required indicator
+├── Card.jsx                               - Card with Header, Title, Content
+├── Checkbox.jsx                           - Checkbox with label
+├── Select.jsx                             - Dropdown select with options
+├── Alert.jsx                              - Alert (success, error, warning, info)
+└── index.js                               - Export all UI components
+
+
+TEST SUMMARY
+============
+Jest Component Tests:   50 tests (5 files)
+Playwright E2E Tests:   41 tests (6 files)
+─────────────────────────────────
+Total Test Coverage:    91 tests
+
+
+COMPONENT FEATURES
+==================
+RegistrationForm:
+  ✓ Email validation (RFC 5322)
+  ✓ Password strength indicator
+  ✓ Password complexity requirements
+  ✓ Country selection (UK/SA/BOTH)
+  ✓ Terms acceptance
+  ✓ Success message with instructions
+
+EmailVerification:
+  ✓ Token-based verification
+  ✓ Auto-redirect on success (3s)
+  ✓ Error handling
+  ✓ Resend verification option
+
+LoginForm:
+  ✓ Email/password authentication
+  ✓ Remember me option
+  ✓ 2FA detection & handling
+  ✓ Error handling (401, 403, 423)
+  ✓ Token storage
+
+TwoFactorSetup:
+  ✓ QR code display
+  ✓ TOTP secret fallback
+  ✓ 6-digit verification
+  ✓ 10 backup codes
+  ✓ Forced download
+  ✓ Skip option (onboarding)
+
+Login with 2FA:
+  ✓ TOTP code input
+  ✓ Backup code option
+  ✓ Context preservation
+  ✓ Invalid code handling
+
+LogoutButton:
+  ✓ API logout call
+  ✓ Token clearing
+  ✓ State clearing
+  ✓ Redirect to login
+
+
+REACT 19 COMPLIANCE
+===================
+✓ NO forwardRef usage
+✓ Minimal useEffect (only where necessary)
+✓ Simple, functional components
+✓ Event-driven state management
+
+
+UI COMPONENT IMPORTS
+=====================
+✓ ALL imports from 'internal-packages-ui'
+✗ NO '@/components/ui' imports (deprecated)
+
+
+COMMANDS
+========
+Install:      cd frontend && npm install && npx playwright install
+Dev Server:   npm run dev
+Jest Tests:   npm test
+E2E Tests:    npm run test:e2e
+Lint:         npm run lint
+
+
+API ENDPOINTS
+=============
+POST   /api/v1/auth/register
+GET    /api/v1/auth/verify-email?token={token}
+POST   /api/v1/auth/resend-verification
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout
+POST   /api/v1/auth/2fa/enable
+POST   /api/v1/auth/2fa/verify-setup
+
+
+STATUS: ✅ ALL TASKS COMPLETE
+==============================
+Task 1.4.1: Registration Form      ✅
+Task 1.4.2: Email Verification     ✅
+Task 1.4.3: Login Form             ✅
+Task 1.4.4: 2FA Setup              ✅
+Task 1.4.5: Login with 2FA         ✅
+Task 1.4.6: Logout                 ✅
+
+READY FOR INTEGRATION TESTING! 🎉
