@@ -27,7 +27,6 @@ from utils.jwt import generate_access_token, generate_refresh_token, get_token_j
 from services.session import session_service
 from services.login_attempt import login_attempt_service
 from services.totp import TOTPService
-from middleware.rate_limiter import limiter
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -72,7 +71,6 @@ def get_user_agent(request: Request) -> str:
 
 
 @router.post("/login", response_model=Union[LoginResponse, Login2FARequiredResponse], status_code=status.HTTP_200_OK)
-@limiter.limit("5/15 minutes")
 async def login(
     request: Request,
     response: Response,

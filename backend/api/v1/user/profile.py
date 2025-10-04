@@ -30,6 +30,82 @@ router = APIRouter()
 
 
 @router.get(
+    "/me",
+    response_model=UserProfileResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Current User Profile",
+    description="Get the authenticated user's profile information (alias for /profile)",
+)
+async def get_current_user_profile(
+    user_id: str = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get the current user's profile.
+
+    This is an alias for GET /profile following REST conventions where
+    /me refers to the currently authenticated user.
+
+    Requires authentication via JWT access token.
+
+    Returns:
+        UserProfileResponse: User profile data
+    """
+    return await _get_user_profile(user_id, db)
+
+
+async def _get_user_profile(user_id: str, db: AsyncSession):
+    """Shared implementation for getting user profile."""
+    try:
+        # Get user with 2FA status
+        stmt = (
+            select(User, User2FA)
+            .outerjoin(User2FA, User2FA.user_id == User.id)
+            .where(User.id == UUID(user_id))
+        )
+        result = await db.execute(stmt)
+        user_and_2fa = result.one_or_none()
+
+        if not user_and_2fa:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        user, user_2fa = user_and_2fa
+
+        # Check if user is active
+        if user.status != UserStatus.ACTIVE:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is not active",
+            )
+
+        return UserProfileResponse(
+            id=str(user.id),
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            country_preference=user.country_preference.value,
+            email_verified=user.email_verified,
+            two_factor_enabled=(user_2fa.enabled if user_2fa else False),
+            status=user.status.value,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+            last_login_at=user.last_login_at,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving user profile: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user profile",
+        )
+
+
+@router.get(
     "/profile",
     response_model=UserProfileResponse,
     status_code=status.HTTP_200_OK,

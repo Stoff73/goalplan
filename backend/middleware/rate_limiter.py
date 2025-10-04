@@ -144,3 +144,18 @@ def rate_limit_email_verification():
 def rate_limit_general():
     """General rate limit for API endpoints: 100 requests per minute per IP."""
     return limiter.limit("100/minute", key_func=rate_limit_key_func)
+
+
+def rate_limit_ai_advice():
+    """Rate limit for AI advice endpoints: 5 requests per hour per user."""
+    return limiter.limit("5/hour", key_func=rate_limit_key_func)
+
+
+def rate_limit_ai_question():
+    """Rate limit for AI question endpoint: 10 requests per hour per user."""
+    return limiter.limit("10/hour", key_func=rate_limit_key_func)
+
+
+def rate_limit_ai_monthly_insights():
+    """Rate limit for monthly insights: 3 requests per day per user."""
+    return limiter.limit("3/day", key_func=rate_limit_key_func)

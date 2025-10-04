@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Button, Alert } from 'internal-packages/ui';
 import { IncomeSummarySection } from '../components/income/IncomeSummarySection';
@@ -8,8 +9,10 @@ import { IncomeDetailsModal } from '../components/income/IncomeDetailsModal';
 import { IncomeTaxYearSwitcher } from '../components/income/IncomeTaxYearSwitcher';
 import { incomeEndpoints } from '../utils/api';
 import { getCurrentUKTaxYear, getCurrentSATaxYear } from '../utils/income';
+import { authStorage } from '../utils/auth';
 
 export default function IncomePage() {
+  const navigate = useNavigate();
   const [incomes, setIncomes] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,8 +29,13 @@ export default function IncomePage() {
   const [selectedIncome, setSelectedIncome] = useState(null);
 
   useEffect(() => {
+    // Check authentication first
+    if (!authStorage.isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
     loadIncomes();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     loadSummary();

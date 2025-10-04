@@ -86,17 +86,17 @@ echo -e "${BLUE}========================================${NC}"
 > "$PROJECT_DIR/frontend.log"
 
 # Check if virtual environment exists at project root
-if [ ! -d "$PROJECT_DIR/venv" ]; then
+if [ ! -d "$PROJECT_DIR/.venv" ]; then
     echo -e "${RED}✗ Virtual environment not found!${NC}"
     echo -e "${YELLOW}Creating virtual environment...${NC}"
     cd "$PROJECT_DIR"
-    python3.12 -m venv venv
-    source venv/bin/activate
+    python3.12 -m venv .venv
+    source .venv/bin/activate
     echo -e "${YELLOW}Installing dependencies...${NC}"
     pip install -r backend/requirements.txt
     echo -e "${GREEN}✓ Dependencies installed${NC}"
 else
-    source "$PROJECT_DIR/venv/bin/activate"
+    source "$PROJECT_DIR/.venv/bin/activate"
 fi
 
 # Start backend in background

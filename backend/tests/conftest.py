@@ -118,6 +118,16 @@ async def test_app() -> FastAPI:
     from api.v1.user import router as user_router
     from api.v1.dashboard import router as dashboard_router
     from api.v1.savings import router as savings_router
+    from api.v1.protection import router as protection_router
+    from api.v1.investments import router as investments_router
+    from api.v1.tax import router as tax_router
+    from api.v1.tax.dta import router as dta_router
+    from api.v1.tax.residency import router as residency_router
+    from api.v1.recommendations import router as recommendations_router
+    from api.v1.retirement.uk_pensions import router as retirement_router
+    from api.v1.iht.estate import router as iht_router
+    from api.v1.goals import router as goals_router
+    from api.v1.ai.advisory import router as ai_advisory_router
     from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
     from slowapi.errors import RateLimitExceeded
 
@@ -134,6 +144,19 @@ async def test_app() -> FastAPI:
     app.include_router(user_router, prefix="/api/v1/user", tags=["User Profile"])
     app.include_router(dashboard_router, prefix="/api/v1", tags=["Dashboard"])
     app.include_router(savings_router, prefix="/api/v1/savings", tags=["Savings"])
+    app.include_router(protection_router, prefix="/api/v1", tags=["Protection"])
+    app.include_router(investments_router, prefix="/api/v1/investments", tags=["Investments"])
+    app.include_router(tax_router, prefix="/api/v1/tax", tags=["Tax Calculations"])
+    app.include_router(dta_router, prefix="/api/v1/tax/dta", tags=["DTA Relief"])
+    app.include_router(residency_router, prefix="/api/v1/tax/residency", tags=["Tax Residency"])
+    app.include_router(ai_advisory_router, prefix="/api/v1/ai", tags=["AI Advisory"])
+    app.include_router(recommendations_router, prefix="/api/v1/recommendations", tags=["Recommendations"])
+    app.include_router(retirement_router, prefix="/api/v1", tags=["Retirement"])
+    app.include_router(iht_router, prefix="/api/v1/iht", tags=["IHT Planning"])
+    app.include_router(goals_router, prefix="/api/v1/goals", tags=["Goals"])
+
+    from api.v1.personalization import router as personalization_router
+    app.include_router(personalization_router, prefix="/api/v1/personalization", tags=["Personalization"])
 
     return app
 
@@ -258,3 +281,64 @@ async def authenticated_headers(test_user, db_session, redis_client):
 async def async_client(test_client):
     """Alias for test_client for backward compatibility."""
     return test_client
+
+
+@pytest.fixture
+async def other_user(db_session: AsyncSession):
+    """
+    Create another test user for authorization testing.
+    
+    Returns an active, verified user different from test_user.
+    Password is 'SecurePass123!'
+    """
+    from models import User, UserStatus
+    from models.user import CountryPreference
+    from utils.password import hash_password
+    from datetime import datetime
+
+    user = User(
+        email="otheruser@example.com",
+        password_hash=hash_password("SecurePass123!"),
+        first_name="Other",
+        last_name="User",
+        country_preference=CountryPreference.UK,
+        status=UserStatus.ACTIVE,
+        email_verified=True,
+        terms_accepted_at=datetime.utcnow(),
+        marketing_consent=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    return user
+
+
+@pytest.fixture
+async def other_user_authenticated_headers(other_user, db_session, redis_client):
+    """
+    Create authentication headers for other_user.
+    
+    Returns a dictionary with Authorization header for authenticated requests.
+    """
+    from utils.jwt import generate_access_token, generate_refresh_token, get_token_jti
+    from services.session import session_service
+
+    access_token = generate_access_token(other_user.id)
+    refresh_token = generate_refresh_token(other_user.id)
+    access_token_jti = get_token_jti(access_token)
+    refresh_token_jti = get_token_jti(refresh_token)
+
+    # Create session in database and Redis
+    await session_service.create_session(
+        db=db_session,
+        user_id=other_user.id,
+        refresh_token_jti=refresh_token_jti,
+        access_token_jti=access_token_jti,
+        device_info="test-device",
+        ip_address="127.0.0.1",
+    )
+
+    return {
+        "Authorization": f"Bearer {access_token}"
+    }

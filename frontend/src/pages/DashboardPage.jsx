@@ -5,6 +5,7 @@ import { authStorage } from '../utils/auth';
 import { Button } from 'internal-packages-ui';
 import { Select } from 'internal-packages-ui';
 import { Alert } from 'internal-packages-ui';
+import { RecommendationsWidget } from '../components/recommendations/RecommendationsWidget';
 
 export default function DashboardPage() {
   const user = authStorage.getUser();
@@ -403,6 +404,9 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Recommended Actions Widget */}
+      <RecommendationsWidget />
 
       {/* Changes Over Time */}
       {changes && (

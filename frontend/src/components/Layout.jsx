@@ -123,12 +123,60 @@ export function Layout({ children, showHeader = true, containerWidth = 'xl' }) {
                 Savings
               </a>
               <a
+                href="/protection"
+                style={navLinkStyle}
+                onMouseOver={(e) => (e.target.style.color = '#2563EB')}
+                onMouseOut={(e) => (e.target.style.color = '#475569')}
+              >
+                Protection
+              </a>
+              <a
+                href="/investments"
+                style={navLinkStyle}
+                onMouseOver={(e) => (e.target.style.color = '#2563EB')}
+                onMouseOut={(e) => (e.target.style.color = '#475569')}
+              >
+                Investments
+              </a>
+              <a
+                href="/retirement"
+                style={navLinkStyle}
+                onMouseOver={(e) => (e.target.style.color = '#2563EB')}
+                onMouseOut={(e) => (e.target.style.color = '#475569')}
+              >
+                Retirement
+              </a>
+              <a
+                href="/iht"
+                style={navLinkStyle}
+                onMouseOver={(e) => (e.target.style.color = '#2563EB')}
+                onMouseOut={(e) => (e.target.style.color = '#475569')}
+              >
+                IHT Planning
+              </a>
+              <a
+                href="/goals"
+                style={navLinkStyle}
+                onMouseOver={(e) => (e.target.style.color = '#2563EB')}
+                onMouseOut={(e) => (e.target.style.color = '#475569')}
+              >
+                Goals
+              </a>
+              <a
                 href="/profile"
                 style={navLinkStyle}
                 onMouseOver={(e) => (e.target.style.color = '#2563EB')}
                 onMouseOut={(e) => (e.target.style.color = '#475569')}
               >
                 Profile
+              </a>
+              <a
+                href="/settings/personalization"
+                style={navLinkStyle}
+                onMouseOver={(e) => (e.target.style.color = '#2563EB')}
+                onMouseOut={(e) => (e.target.style.color = '#475569')}
+              >
+                Settings
               </a>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <span style={{ color: '#475569', fontSize: '0.875rem' }}>

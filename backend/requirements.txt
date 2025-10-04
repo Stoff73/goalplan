@@ -44,6 +44,7 @@ PyJWT==2.8.0
 pytest==8.0.0
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
+python-dateutil==2.8.2
 python-dotenv==1.0.0
 python-jose==3.3.0
 python-multipart==0.0.6
@@ -62,3 +63,5 @@ watchfiles==1.1.0
 websockets==15.0.1
 pyotp==2.9.0
 qrcode[pil]==7.4.2
+numpy==1.26.3
+openai==1.12.0

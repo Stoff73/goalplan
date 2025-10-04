@@ -6,3 +6,7 @@ export { Card, CardHeader, CardTitle, CardContent } from './Card';
 export { Checkbox } from './Checkbox';
 export { Select } from './Select';
 export { Alert } from './Alert';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
+export { Slider } from './Slider';
+export { Progress } from './Progress';
+export { Badge } from './Badge';

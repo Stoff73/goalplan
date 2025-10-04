@@ -296,6 +296,98 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    life_assurance_policies = relationship(
+        "LifeAssurancePolicy",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    coverage_analyses = relationship(
+        "CoverageNeedsAnalysis",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        order_by="desc(CoverageNeedsAnalysis.effective_from)"
+    )
+    investment_accounts = relationship(
+        "InvestmentAccount",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    uk_pensions = relationship(
+        "UKPension",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    annual_allowance_records = relationship(
+        "AnnualAllowanceTracking",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    state_pension_forecast = relationship(
+        "StatePensionForecast",
+        back_populates="user",
+        uselist=False,  # One-to-one
+        cascade="all, delete-orphan"
+    )
+    retirement_projections = relationship(
+        "RetirementProjection",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    sa_retirement_funds = relationship(
+        "SARetirementFund",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    sa_deduction_limits = relationship(
+        "SARetirementDeductionLimits",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    estate_assets = relationship(
+        "EstateAsset",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    estate_liabilities = relationship(
+        "EstateLiability",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    iht_calculations = relationship(
+        "IHTCalculation",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    sa_estate_duty_calculations = relationship(
+        "SAEstateDutyCalculation",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    gifts = relationship(
+        "Gift",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    iht_exemptions = relationship(
+        "IHTExemption",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    preferences = relationship(
+        "UserPreference",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    behaviors = relationship(
+        "UserBehavior",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    insights = relationship(
+        "PersonalizedInsight",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         """String representation of User."""

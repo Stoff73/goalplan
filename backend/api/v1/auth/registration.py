@@ -23,7 +23,6 @@ from schemas.auth import (
 )
 from utils.password import hash_password
 from services.email import email_service
-from middleware.rate_limiter import limiter, rate_limit_registration
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,6 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserRegistrationResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/hour")
 async def register_user(
     request: Request,
     response: Response,

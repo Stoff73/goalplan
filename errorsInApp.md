@@ -1,0 +1,245 @@
+When trying to fill in the tas status page, errors on save.
+
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+(anonymous) @ main.jsx:8
+api.js:87  GET http://localhost:8000/api/v1/user/tax-status 404 (Not Found)
+request @ api.js:87
+get @ api.js:146
+getCurrent @ api.js:241
+loadData @ TaxStatusPage.jsx:32
+(anonymous) @ TaxStatusPage.jsx:22
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17484
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+commitHookEffectListMount @ react-dom_client.js?v=d4c43773:8458
+commitHookPassiveMountEffects @ react-dom_client.js?v=d4c43773:8516
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9885
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9982
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9879
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9879
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9982
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9982
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9879
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9879
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9879
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9982
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=d4c43773:9866
+commitPassiveMountOnFiber @ react-dom_client.js?v=d4c43773:9897
+flushPassiveEffects @ react-dom_client.js?v=d4c43773:11300
+(anonymous) @ react-dom_client.js?v=d4c43773:11058
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<TaxStatusPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+App @ App.jsx:28
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+(anonymous) @ main.jsx:8
+api.js:87  GET http://localhost:8000/api/v1/user/tax-status 404 (Not Found)
+request @ api.js:87
+get @ api.js:146
+getCurrent @ api.js:241
+loadData @ TaxStatusPage.jsx:32
+(anonymous) @ TaxStatusPage.jsx:22
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17484
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+commitHookEffectListMount @ react-dom_client.js?v=d4c43773:8458
+commitHookPassiveMountEffects @ react-dom_client.js?v=d4c43773:8516
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10014
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10052
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10007
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10007
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10052
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10052
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10007
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10007
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10007
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=d4c43773:9993
+reconnectPassiveEffects @ react-dom_client.js?v=d4c43773:10052
+doubleInvokeEffectsOnFiber @ react-dom_client.js?v=d4c43773:11459
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom_client.js?v=d4c43773:11430
+commitDoubleInvokeEffectsInDEV @ react-dom_client.js?v=d4c43773:11467
+flushPassiveEffects @ react-dom_client.js?v=d4c43773:11307
+(anonymous) @ react-dom_client.js?v=d4c43773:11058
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<TaxStatusPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+App @ App.jsx:28
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+(anonymous) @ main.jsx:8
+tax-status:1 Access to fetch at 'http://localhost:8000/api/v1/user/tax-status' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+api.js:87  POST http://localhost:8000/api/v1/user/tax-status net::ERR_FAILED 500 (Internal Server Error)
+request @ api.js:87
+post @ api.js:150
+create @ api.js:243
+handleSaveTaxStatus @ TaxStatusPage.jsx:76
+handleSubmit @ UpdateTaxStatusForm.jsx:114
+executeDispatch @ react-dom_client.js?v=d4c43773:11734
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+processDispatchQueue @ react-dom_client.js?v=d4c43773:11770
+(anonymous) @ react-dom_client.js?v=d4c43773:12180
+batchedUpdates$1 @ react-dom_client.js?v=d4c43773:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=d4c43773:11875
+dispatchEvent @ react-dom_client.js?v=d4c43773:14790
+dispatchDiscreteEvent @ react-dom_client.js?v=d4c43773:14771
+<form>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+UpdateTaxStatusForm @ UpdateTaxStatusForm.jsx:131
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<UpdateTaxStatusForm>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+TaxStatusPage @ TaxStatusPage.jsx:188
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<TaxStatusPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+App @ App.jsx:28
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+(anonymous) @ main.jsx:8
+TaxStatusPage.jsx:87 Error saving tax status: TypeError: Network error. Please check your connection.
+    at AuthApiClient.request (api.js:87:30)
+    at AuthApiClient.post (api.js:150:17)
+    at Object.create (api.js:243:29)
+    at handleSaveTaxStatus (TaxStatusPage.jsx:76:32)
+    at handleSubmit (UpdateTaxStatusForm.jsx:114:5)
+    at executeDispatch (react-dom_client.js?v=d4c43773:11734:11)
+    at runWithFiberInDEV (react-dom_client.js?v=d4c43773:1483:72)
+    at processDispatchQueue (react-dom_client.js?v=d4c43773:11770:37)
+    at react-dom_client.js?v=d4c43773:12180:11
+    at batchedUpdates$1 (react-dom_client.js?v=d4c43773:2626:42)
+overrideMethod @ hook.js:608
+handleSaveTaxStatus @ TaxStatusPage.jsx:87
+await in handleSaveTaxStatus
+handleSubmit @ UpdateTaxStatusForm.jsx:114
+executeDispatch @ react-dom_client.js?v=d4c43773:11734
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+processDispatchQueue @ react-dom_client.js?v=d4c43773:11770
+(anonymous) @ react-dom_client.js?v=d4c43773:12180
+batchedUpdates$1 @ react-dom_client.js?v=d4c43773:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=d4c43773:11875
+dispatchEvent @ react-dom_client.js?v=d4c43773:14790
+dispatchDiscreteEvent @ react-dom_client.js?v=d4c43773:14771
+<form>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+UpdateTaxStatusForm @ UpdateTaxStatusForm.jsx:131
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<UpdateTaxStatusForm>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+TaxStatusPage @ TaxStatusPage.jsx:188
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<TaxStatusPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+App @ App.jsx:28
+react_stack_bottom_frame @ react-dom_client.js?v=d4c43773:17422
+renderWithHooksAgain @ react-dom_client.js?v=d4c43773:4279
+renderWithHooks @ react-dom_client.js?v=d4c43773:4215
+updateFunctionComponent @ react-dom_client.js?v=d4c43773:6617
+beginWork @ react-dom_client.js?v=d4c43773:7652
+runWithFiberInDEV @ react-dom_client.js?v=d4c43773:1483
+performUnitOfWork @ react-dom_client.js?v=d4c43773:10866
+workLoopSync @ react-dom_client.js?v=d4c43773:10726
+renderRootSync @ react-dom_client.js?v=d4c43773:10709
+performWorkOnRoot @ react-dom_client.js?v=d4c43773:10328
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=d4c43773:11621
+performWorkUntilDeadline @ react-dom_client.js?v=d4c43773:34
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=d4c43773:248
+(anonymous) @ main.jsx:8

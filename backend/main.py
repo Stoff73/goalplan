@@ -196,11 +196,37 @@ from api.v1.auth import router as auth_router
 from api.v1.user import router as user_router
 from api.v1.dashboard import router as dashboard_router
 from api.v1.savings import router as savings_router
+from api.v1.protection import router as protection_router
+from api.v1.investments import router as investments_router
+from api.v1.tax import router as tax_router
+from api.v1.tax.dta import router as dta_router
+from api.v1.tax.residency import router as residency_router
+from api.v1.recommendations import router as recommendations_router
+from api.v1.retirement.uk_pensions import router as retirement_router
+from api.v1.retirement.sa_funds import router as sa_funds_router
+from api.v1.iht.estate import router as iht_router
+from api.v1.goals import router as goals_router
+from api.v1.scenarios.scenarios import router as scenarios_router
+from api.v1.ai.advisory import router as ai_router
+from api.v1.personalization import router as personalization_router
 
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth")
 app.include_router(user_router, prefix=f"{settings.API_V1_PREFIX}/user")
 app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)
 app.include_router(savings_router, prefix=f"{settings.API_V1_PREFIX}/savings")
+app.include_router(protection_router, prefix=settings.API_V1_PREFIX)
+app.include_router(investments_router, prefix=f"{settings.API_V1_PREFIX}/investments")
+app.include_router(tax_router, prefix=f"{settings.API_V1_PREFIX}/tax")
+app.include_router(dta_router, prefix=f"{settings.API_V1_PREFIX}/tax/dta", tags=["DTA Relief"])
+app.include_router(residency_router, prefix=f"{settings.API_V1_PREFIX}/tax/residency", tags=["Tax Residency"])
+app.include_router(recommendations_router, prefix=f"{settings.API_V1_PREFIX}/recommendations", tags=["recommendations"])
+app.include_router(retirement_router, prefix=settings.API_V1_PREFIX, tags=["retirement"])
+app.include_router(sa_funds_router, prefix=f"{settings.API_V1_PREFIX}/retirement", tags=["sa-retirement"])
+app.include_router(iht_router, prefix=f"{settings.API_V1_PREFIX}/iht", tags=["IHT Planning"])
+app.include_router(goals_router, prefix=f"{settings.API_V1_PREFIX}/goals", tags=["Goals"])
+app.include_router(scenarios_router, prefix=settings.API_V1_PREFIX)
+app.include_router(ai_router, prefix=f"{settings.API_V1_PREFIX}/ai", tags=["AI Advisory"])
+app.include_router(personalization_router, prefix=f"{settings.API_V1_PREFIX}/personalization")
 
 
 if __name__ == "__main__":

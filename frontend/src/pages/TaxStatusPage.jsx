@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Alert } from 'internal-packages/ui';
 import { CurrentTaxStatusSection } from '../components/tax/CurrentTaxStatusSection';
@@ -7,8 +8,10 @@ import { TaxCalculators } from '../components/tax/TaxCalculators';
 import { DeemedDomicileSection } from '../components/tax/DeemedDomicileSection';
 import { TaxStatusTimeline } from '../components/tax/TaxStatusTimeline';
 import { taxStatusEndpoints } from '../utils/api';
+import { authStorage } from '../utils/auth';
 
 export default function TaxStatusPage() {
+  const navigate = useNavigate();
   const [currentStatus, setCurrentStatus] = useState(null);
   const [history, setHistory] = useState([]);
   const [deemedDomicile, setDeemedDomicile] = useState(null);
@@ -19,8 +22,13 @@ export default function TaxStatusPage() {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
 
   useEffect(() => {
+    // Check authentication first
+    if (!authStorage.isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
     loadData();
-  }, []);
+  }, [navigate]);
 
   const loadData = async () => {
     setLoading(true);
