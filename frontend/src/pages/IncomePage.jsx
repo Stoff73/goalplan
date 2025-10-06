@@ -20,6 +20,7 @@ export default function IncomePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [taxStatus, setTaxStatus] = useState(null);
 
   const [selectedCountry, setSelectedCountry] = useState('UK');
   const [selectedTaxYear, setSelectedTaxYear] = useState(getCurrentUKTaxYear());
@@ -34,12 +35,45 @@ export default function IncomePage() {
       navigate('/login');
       return;
     }
+    loadTaxStatus();
     loadIncomes();
   }, [navigate]);
 
   useEffect(() => {
     loadSummary();
   }, [selectedCountry, selectedTaxYear]);
+
+  const loadTaxStatus = async () => {
+    try {
+      const token = authStorage.getAccessToken();
+      const response = await fetch('/api/v1/user/tax-status', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTaxStatus(data);
+
+        // Set default country based on tax residency
+        if (data.ukTaxResident && !data.saTaxResident) {
+          setSelectedCountry('UK');
+          setSelectedTaxYear(getCurrentUKTaxYear());
+        } else if (data.saTaxResident && !data.ukTaxResident) {
+          setSelectedCountry('SA');
+          setSelectedTaxYear(getCurrentSATaxYear());
+        } else if (data.ukTaxResident && data.saTaxResident) {
+          // Dual resident - default to UK
+          setSelectedCountry('UK');
+          setSelectedTaxYear(getCurrentUKTaxYear());
+        }
+      }
+    } catch (err) {
+      console.error('Error loading tax status:', err);
+      // Keep default UK if tax status fails to load
+    }
+  };
 
   const loadIncomes = async () => {
     setLoading(true);

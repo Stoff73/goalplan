@@ -415,6 +415,33 @@ async def delete_income(
         )
 
 
+# IMPORTANT: More specific routes must come FIRST in FastAPI for proper matching
+@router.get("/summary/{year_start}/{year_end}", response_model=IncomeSummary)
+async def get_income_summary_slash_format(
+    year_start: str,
+    year_end: str,
+    country: str = Query('UK', description="UK or SA"),
+    current_user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get income summary for a tax year (handles frontend calls like /summary/2025/26).
+
+    This endpoint handles frontend calls like /summary/2025/26
+    and forwards to the main summary endpoint logic.
+    """
+    # Construct tax year string in slash format (matching database format)
+    tax_year = f"{year_start}/{year_end}"
+
+    # Call the main summary endpoint logic
+    return await get_income_summary(
+        tax_year=tax_year,
+        country=country,
+        current_user_id=current_user_id,
+        db=db
+    )
+
+
 @router.get("/summary/{tax_year}", response_model=IncomeSummary)
 async def get_income_summary(
     tax_year: str,
@@ -465,32 +492,36 @@ async def get_income_summary(
         foreign_tax_credit_total = Decimal('0')
 
         for income in income_records:
-            # Total income
-            if income.amount_in_gbp:
-                total_gbp += income.amount_in_gbp
-            if income.amount_in_zar:
-                total_zar += income.amount_in_zar
+            # Get source country and currency
+            source_country = income.source_country
+            currency = income.currency
+            gross_amount = income.amount or Decimal('0')
 
-            # By type (use GBP amounts)
+            # Get tax withheld (always in same currency as income.currency)
+            tax_withheld_amount = income.tax_withheld_amount or Decimal('0')
+
+            # Calculate net
+            net_amount = gross_amount - tax_withheld_amount
+
+            # Add to totals BY SOURCE COUNTRY ONLY (no conversion)
+            if source_country == 'UK':
+                total_gbp += net_amount
+                total_tax_withheld += tax_withheld_amount
+            elif source_country == 'ZA':
+                total_zar += net_amount
+
+            # By type (GBP only for consistency)
             income_type = income.income_type
-            amount = income.amount_in_gbp or Decimal('0')
-            income_by_type[income_type] = income_by_type.get(income_type, Decimal('0')) + amount
+            if currency == 'GBP':
+                income_by_type[income_type] = income_by_type.get(income_type, Decimal('0')) + net_amount
 
             # By source
-            source = income.source_country
-            income_by_source[source] = income_by_source.get(source, Decimal('0')) + amount
-
-            # Tax withheld (convert to GBP)
-            if income.tax_withheld_amount:
-                if income.tax_withheld_currency == 'GBP':
-                    total_tax_withheld += income.tax_withheld_amount
-                else:
-                    # Simplified conversion
-                    total_tax_withheld += income.tax_withheld_amount / Decimal('20')
+            if currency == 'GBP':
+                income_by_source[source_country] = income_by_source.get(source_country, Decimal('0')) + net_amount
 
             # Foreign income
-            if income.is_foreign_income:
-                foreign_income_total += (income.amount_in_gbp or Decimal('0'))
+            if income.is_foreign_income and currency == 'GBP':
+                foreign_income_total += net_amount
                 if income.foreign_tax_credit:
                     foreign_tax_credit_total += income.foreign_tax_credit
 
@@ -515,32 +546,6 @@ async def get_income_summary(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate income summary"
         )
-
-
-@router.get("/summary/{year_start}/{year_end}", response_model=IncomeSummary)
-async def get_income_summary_slash_format(
-    year_start: str,
-    year_end: str,
-    country: str = Query('UK', description="UK or SA"),
-    current_user_id: str = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Get income summary for a tax year (alternative route accepting slash format).
-
-    This endpoint handles frontend calls like /summary/2025/26
-    and forwards to the main summary endpoint logic.
-    """
-    # Construct tax year string in standard format
-    tax_year = f"{year_start}-{year_end}"
-
-    # Call the main summary endpoint logic
-    return await get_income_summary(
-        tax_year=tax_year,
-        country=country,
-        current_user_id=current_user_id,
-        db=db
-    )
 
 
 # Helper functions

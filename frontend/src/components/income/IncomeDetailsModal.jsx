@@ -16,21 +16,21 @@ export function IncomeDetailsModal({ income, onEdit, onDelete, onClose }) {
   const incomeType = income.income_type || income.incomeType;
   const sourceCountry = income.source_country || income.sourceCountry;
   const description = income.description || '';
-  const relatedEntity = income.related_entity || income.relatedEntity || '';
-  const amount = income.amount || 0;
+  const employerName = income.employer_name || income.employerName || '';
+  const amount = parseFloat(income.amount) || 0;
   const currency = income.currency || 'GBP';
-  const gbpAmount = income.gbp_amount || income.gbpAmount || 0;
-  const zarAmount = income.zar_amount || income.zarAmount || 0;
+  const gbpAmount = parseFloat(income.amount_in_gbp || income.amountInGbp) || 0;
+  const zarAmount = parseFloat(income.amount_in_zar || income.amountInZar) || 0;
   const frequency = income.frequency || 'annual';
-  const startDate = income.start_date || income.startDate;
+  const startDate = income.start_date || income.startDate || income.income_date || income.incomeDate;
   const endDate = income.end_date || income.endDate;
   const isGross = income.is_gross !== undefined ? income.is_gross : (income.isGross !== undefined ? income.isGross : true);
-  const taxWithheld = income.tax_withheld_at_source || income.taxWithheldAtSource || 0;
+  const taxWithheld = parseFloat(income.tax_withheld_amount || income.taxWithheldAmount) || 0;
   const payeReference = income.paye_reference || income.payeReference || '';
-  const exchangeRate = income.exchange_rate_used || income.exchangeRateUsed;
+  const exchangeRate = parseFloat(income.exchange_rate || income.exchangeRate) || null;
   const exchangeRateDate = income.exchange_rate_date || income.exchangeRateDate;
-  const ukTaxYear = income.uk_tax_year || income.ukTaxYear;
-  const saTaxYear = income.sa_tax_year || income.saTaxYear;
+  const ukTaxYear = income.tax_year_uk || income.taxYearUk;
+  const saTaxYear = income.tax_year_sa || income.taxYearSa;
 
   const isForeign = sourceCountry !== 'UK' && sourceCountry !== 'ZA';
 
@@ -154,7 +154,7 @@ export function IncomeDetailsModal({ income, onEdit, onDelete, onClose }) {
       <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
         <div style={modalHeaderStyle}>
           <span>{getIncomeTypeIcon(incomeType)}</span>
-          <span>{relatedEntity || description || getIncomeTypeLabel(incomeType)}</span>
+          <span>{employerName || description || getIncomeTypeLabel(incomeType)}</span>
         </div>
 
         <div style={modalSubtitleStyle}>
@@ -193,12 +193,12 @@ export function IncomeDetailsModal({ income, onEdit, onDelete, onClose }) {
             </div>
           )}
 
-          {relatedEntity && (
+          {employerName && (
             <div style={detailRowStyle}>
               <span style={detailLabelStyle}>
-                {incomeType === 'employment' ? 'Employer' : 'Related Entity'}
+                {incomeType === 'employment' ? 'Employer' : 'Source'}
               </span>
-              <span style={detailValueStyle}>{relatedEntity}</span>
+              <span style={detailValueStyle}>{employerName}</span>
             </div>
           )}
 
@@ -256,16 +256,41 @@ export function IncomeDetailsModal({ income, onEdit, onDelete, onClose }) {
           )}
         </div>
 
-        {/* Tax Information */}
-        {(taxWithheld > 0 || payeReference) && (
+        {/* Tax Calculation */}
+        {isGross && (
           <div style={sectionStyle}>
-            <h3 style={sectionTitleStyle}>Tax Withheld</h3>
+            <h3 style={sectionTitleStyle}>Tax Calculation</h3>
+
+            <div style={detailRowStyle}>
+              <span style={detailLabelStyle}>Gross Income</span>
+              <span style={detailValueStyle}>{formatCurrency(amount, currency)}</span>
+            </div>
 
             {taxWithheld > 0 && (
-              <div style={detailRowStyle}>
-                <span style={detailLabelStyle}>Tax Withheld at Source</span>
-                <span style={detailValueStyle}>{formatCurrency(taxWithheld, currency)}</span>
-              </div>
+              <>
+                <div style={detailRowStyle}>
+                  <span style={detailLabelStyle}>Tax Withheld</span>
+                  <span style={{ ...detailValueStyle, color: '#DC2626' }}>
+                    -{formatCurrency(taxWithheld, currency)}
+                  </span>
+                </div>
+
+                <div style={{ ...detailRowStyle, backgroundColor: '#EFF6FF', borderLeft: '3px solid #3B82F6' }}>
+                  <span style={{ ...detailLabelStyle, fontWeight: 600 }}>Net Income (After Tax)</span>
+                  <span style={{ ...detailValueStyle, fontSize: '1.1rem', color: '#10B981' }}>
+                    {formatCurrency(amount - taxWithheld, currency)}
+                  </span>
+                </div>
+
+                {taxWithheld > 0 && amount > 0 && (
+                  <div style={detailRowStyle}>
+                    <span style={detailLabelStyle}>Effective Tax Rate</span>
+                    <span style={detailValueStyle}>
+                      {((taxWithheld / amount) * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </>
             )}
 
             {payeReference && (

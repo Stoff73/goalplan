@@ -102,7 +102,7 @@ export function IncomeSummarySection({ summary, taxYear, country, loading }) {
     );
   }
 
-  if (!summary || summary.total_income_gbp === 0) {
+  if (!summary || summary.totalIncomeGbp === 0) {
     return (
       <div style={narrativeSectionStyle}>
         <h3 style={sectionHeadingStyle}>Your income for {taxYear}</h3>
@@ -118,18 +118,30 @@ export function IncomeSummarySection({ summary, taxYear, country, loading }) {
     );
   }
 
-  const totalGBP = summary.total_income_gbp || 0;
-  const totalZAR = summary.total_income_zar || 0;
-  const taxWithheld = summary.total_tax_withheld_gbp || 0;
-  const foreignIncome = summary.foreign_income_gbp || 0;
-  const foreignTaxCredits = summary.foreign_tax_credits_gbp || 0;
+  const totalGBP = parseFloat(summary.totalIncomeGbp) || 0;
+  const totalZAR = parseFloat(summary.totalIncomeZar) || 0;
+  const taxWithheld = parseFloat(summary.totalTaxWithheld) || 0;
+  const foreignIncome = parseFloat(summary.foreignIncome) || 0;
+  const foreignTaxCredits = parseFloat(summary.foreignTaxCredit) || 0;
 
   // Build narrative text
   const getNarrativeText = () => {
     const gbpFormatted = formatCurrency(totalGBP, 'GBP');
     const zarFormatted = formatCurrency(totalZAR, 'ZAR');
 
-    return `You earned a total of ${gbpFormatted} (${zarFormatted}) in the ${country} tax year ${taxYear}. `;
+    let narrative = `Your net income for ${taxYear}: `;
+
+    if (totalGBP > 0 && totalZAR > 0) {
+      narrative += `${gbpFormatted} from UK sources and ${zarFormatted} from SA sources (after tax withheld).`;
+    } else if (totalGBP > 0) {
+      narrative += `${gbpFormatted} from UK sources (after tax withheld).`;
+    } else if (totalZAR > 0) {
+      narrative += `${zarFormatted} from SA sources (after tax withheld).`;
+    } else {
+      narrative += `No income recorded for this tax year.`;
+    }
+
+    return narrative;
   };
 
   return (
@@ -140,18 +152,22 @@ export function IncomeSummarySection({ summary, taxYear, country, loading }) {
 
       {/* Key Metrics */}
       <div style={metricGridStyle}>
-        <div style={compactMetricStyle}>
-          <div style={metricValueStyle}>{formatCurrency(totalGBP, 'GBP')}</div>
-          <div style={metricLabelStyle}>Total Income (GBP)</div>
-        </div>
-        <div style={compactMetricStyle}>
-          <div style={metricValueStyle}>{formatCurrency(totalZAR, 'ZAR')}</div>
-          <div style={metricLabelStyle}>Total Income (ZAR)</div>
-        </div>
+        {totalGBP > 0 && (
+          <div style={compactMetricStyle}>
+            <div style={metricValueStyle}>{formatCurrency(totalGBP, 'GBP')}</div>
+            <div style={metricLabelStyle}>UK Income (Net)</div>
+          </div>
+        )}
+        {totalZAR > 0 && (
+          <div style={compactMetricStyle}>
+            <div style={metricValueStyle}>{formatCurrency(totalZAR, 'ZAR')}</div>
+            <div style={metricLabelStyle}>SA Income (Net)</div>
+          </div>
+        )}
         {taxWithheld > 0 && (
           <div style={compactMetricStyle}>
             <div style={metricValueStyle}>{formatCurrency(taxWithheld, 'GBP')}</div>
-            <div style={metricLabelStyle}>Tax Already Withheld</div>
+            <div style={metricLabelStyle}>Tax Withheld</div>
           </div>
         )}
         {foreignIncome > 0 && (
@@ -193,12 +209,12 @@ export function IncomeSummarySection({ summary, taxYear, country, loading }) {
       )}
 
       {/* Income by Type Breakdown */}
-      {summary.by_type && Object.keys(summary.by_type).length > 0 && (
+      {summary.incomeByType && Object.keys(summary.incomeByType).length > 0 && (
         <div style={breakdownSectionStyle}>
           <h4 style={{ ...sectionHeadingStyle, fontSize: '1rem', marginBottom: '12px' }}>
             Income by Type
           </h4>
-          {Object.entries(summary.by_type).map(([type, amount]) => (
+          {Object.entries(summary.incomeByType).map(([type, amount]) => (
             <div key={type} style={breakdownItemStyle}>
               <div style={breakdownLabelStyle}>
                 <span>{getIncomeTypeIcon(type)}</span>
@@ -211,12 +227,12 @@ export function IncomeSummarySection({ summary, taxYear, country, loading }) {
       )}
 
       {/* Income by Country Breakdown */}
-      {summary.by_country && Object.keys(summary.by_country).length > 0 && (
+      {summary.incomeBySource && Object.keys(summary.incomeBySource).length > 0 && (
         <div style={breakdownSectionStyle}>
           <h4 style={{ ...sectionHeadingStyle, fontSize: '1rem', marginBottom: '12px' }}>
             Income by Source Country
           </h4>
-          {Object.entries(summary.by_country).map(([countryCode, amount]) => (
+          {Object.entries(summary.incomeBySource).map(([countryCode, amount]) => (
             <div key={countryCode} style={breakdownItemStyle}>
               <div style={breakdownLabelStyle}>
                 <span>{getCountryFlag(countryCode)}</span>

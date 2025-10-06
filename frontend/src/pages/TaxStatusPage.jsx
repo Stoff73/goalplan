@@ -7,6 +7,8 @@ import { UpdateTaxStatusForm } from '../components/tax/UpdateTaxStatusForm';
 import { TaxCalculators } from '../components/tax/TaxCalculators';
 import { DeemedDomicileSection } from '../components/tax/DeemedDomicileSection';
 import { TaxStatusTimeline } from '../components/tax/TaxStatusTimeline';
+import { UKIncomeTaxTable } from '../components/tax/UKIncomeTaxTable';
+import { SAIncomeTaxTable } from '../components/tax/SAIncomeTaxTable';
 import { taxStatusEndpoints } from '../utils/api';
 import { authStorage } from '../utils/auth';
 
@@ -20,6 +22,7 @@ export default function TaxStatusPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('status');
 
   useEffect(() => {
     // Check authentication first
@@ -152,6 +155,26 @@ export default function TaxStatusPage() {
     lineHeight: '1.7',
   };
 
+  const tabContainerStyle = {
+    display: 'flex',
+    gap: '8px',
+    borderBottom: '2px solid #E2E8F0',
+    marginBottom: '32px',
+  };
+
+  const tabStyle = (isActive) => ({
+    padding: '12px 24px',
+    fontSize: '1rem',
+    fontWeight: isActive ? 600 : 500,
+    color: isActive ? '#2563EB' : '#64748B',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderBottom: isActive ? '3px solid #2563EB' : '3px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    marginBottom: '-2px',
+  });
+
   return (
     <Layout>
       <div>
@@ -162,6 +185,28 @@ export default function TaxStatusPage() {
             Your tax residency and domicile determine where you owe tax and how much. We'll help you
             understand your status in both the UK and South Africa, and what it means for your financial planning.
           </p>
+        </div>
+
+        {/* Tabs */}
+        <div style={tabContainerStyle}>
+          <button
+            style={tabStyle(activeTab === 'status')}
+            onClick={() => setActiveTab('status')}
+          >
+            Tax Status
+          </button>
+          <button
+            style={tabStyle(activeTab === 'uk-tax')}
+            onClick={() => setActiveTab('uk-tax')}
+          >
+            UK Income Tax
+          </button>
+          <button
+            style={tabStyle(activeTab === 'sa-tax')}
+            onClick={() => setActiveTab('sa-tax')}
+          >
+            SA Income Tax
+          </button>
         </div>
 
         {/* Error Alert */}
@@ -179,16 +224,19 @@ export default function TaxStatusPage() {
           </Alert>
         )}
 
-        {/* Current Tax Status Section */}
-        {!showUpdateForm && (
-          <div style={sectionSpacingStyle}>
-            <CurrentTaxStatusSection
-              taxStatus={currentStatus}
-              onEdit={handleEditStatus}
-              loading={loading}
-            />
-          </div>
-        )}
+        {/* Tax Status Tab Content */}
+        {activeTab === 'status' && (
+          <>
+            {/* Current Tax Status Section */}
+            {!showUpdateForm && (
+              <div style={sectionSpacingStyle}>
+                <CurrentTaxStatusSection
+                  taxStatus={currentStatus}
+                  onEdit={handleEditStatus}
+                  loading={loading}
+                />
+              </div>
+            )}
 
         {/* Update Tax Status Form */}
         {showUpdateForm && (
@@ -222,34 +270,46 @@ export default function TaxStatusPage() {
           </div>
         )}
 
-        {/* Educational Footer */}
-        <div style={calloutStyle}>
-          <h3 style={calloutTitleStyle}>Need help understanding your tax status?</h3>
-          <p style={calloutTextStyle}>
-            Tax residency and domicile can be complex topics, especially when you have ties to both
-            the UK and South Africa. Don't worry—that's exactly why GoalPlan exists!
-          </p>
-          <p style={{ ...calloutTextStyle, marginTop: '12px' }}>
-            If you're unsure about your status, we recommend:
-          </p>
-          <ul style={{
-            marginTop: '8px',
-            paddingLeft: '20px',
-            color: '#475569',
-            fontSize: '0.95rem',
-            lineHeight: '1.7',
-            listStyleType: 'disc'
-          }}>
-            <li style={{ marginBottom: '4px' }}>Using the calculators above to determine your UK and SA residency</li>
-            <li style={{ marginBottom: '4px' }}>Consulting HMRC's Statutory Residence Test guidance for UK residency</li>
-            <li style={{ marginBottom: '4px' }}>Reviewing SARS's physical presence test rules for SA residency</li>
-            <li style={{ marginBottom: '4px' }}>Speaking with a qualified tax advisor if you have a complex situation</li>
-          </ul>
-          <p style={{ ...calloutTextStyle, marginTop: '12px' }}>
-            Your tax status affects everything from income tax to inheritance tax planning. Getting
-            it right is essential for accurate calculations and financial planning across both countries.
-          </p>
-        </div>
+            {/* Educational Footer */}
+            <div style={calloutStyle}>
+              <h3 style={calloutTitleStyle}>Need help understanding your tax status?</h3>
+              <p style={calloutTextStyle}>
+                Tax residency and domicile can be complex topics, especially when you have ties to both
+                the UK and South Africa. Don't worry—that's exactly why GoalPlan exists!
+              </p>
+              <p style={{ ...calloutTextStyle, marginTop: '12px' }}>
+                If you're unsure about your status, we recommend:
+              </p>
+              <ul style={{
+                marginTop: '8px',
+                paddingLeft: '20px',
+                color: '#475569',
+                fontSize: '0.95rem',
+                lineHeight: '1.7',
+                listStyleType: 'disc'
+              }}>
+                <li style={{ marginBottom: '4px' }}>Using the calculators above to determine your UK and SA residency</li>
+                <li style={{ marginBottom: '4px' }}>Consulting HMRC's Statutory Residence Test guidance for UK residency</li>
+                <li style={{ marginBottom: '4px' }}>Reviewing SARS's physical presence test rules for SA residency</li>
+                <li style={{ marginBottom: '4px' }}>Speaking with a qualified tax advisor if you have a complex situation</li>
+              </ul>
+              <p style={{ ...calloutTextStyle, marginTop: '12px' }}>
+                Your tax status affects everything from income tax to inheritance tax planning. Getting
+                it right is essential for accurate calculations and financial planning across both countries.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* UK Income Tax Tab Content */}
+        {activeTab === 'uk-tax' && (
+          <UKIncomeTaxTable />
+        )}
+
+        {/* SA Income Tax Tab Content */}
+        {activeTab === 'sa-tax' && (
+          <SAIncomeTaxTable />
+        )}
       </div>
     </Layout>
   );
