@@ -122,7 +122,7 @@ class UserTaxStatus(Base):
         doc="Whether user is UK tax resident"
     )
     uk_domicile = Column(
-        Enum(UKDomicileStatus),
+        Enum(UKDomicileStatus, values_callable=lambda x: [e.value for e in x]),
         nullable=True,
         doc="UK domicile status"
     )

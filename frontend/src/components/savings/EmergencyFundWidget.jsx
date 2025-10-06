@@ -13,10 +13,10 @@ export function EmergencyFundWidget({ emergencyFund, formatCurrency }) {
 
   const getStatusText = () => {
     if (status === 'ADEQUATE') {
-      return `You have ${monthsCovered.toFixed(1)} months of expenses saved - excellent!`;
+      return `You have ${(monthsCovered || 0).toFixed(1)} months of expenses saved - excellent!`;
     }
     if (status === 'INSUFFICIENT') {
-      return `You have ${monthsCovered.toFixed(1)} months of expenses saved. Most experts recommend 6 months.`;
+      return `You have ${(monthsCovered || 0).toFixed(1)} months of expenses saved. Most experts recommend 6 months.`;
     }
     return 'You haven\'t designated any accounts as emergency fund yet.';
   };

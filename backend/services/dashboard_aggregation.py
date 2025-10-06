@@ -142,13 +142,15 @@ class DashboardAggregationService:
         total_liabilities = Decimal('0.00')
 
         # Aggregate assets from each module
-        # Note: In Phase 1, we don't have savings accounts yet
-        # This structure is ready for future modules
 
-        # Future: Aggregate savings accounts
-        # savings_data = await self._aggregate_savings(user_id, base_currency, as_of_date)
-        # total_assets += savings_data['total']
-        # ... update breakdown dicts
+        # Aggregate savings accounts
+        savings_data = await self._aggregate_savings(user_id, base_currency, as_of_date)
+        total_assets += savings_data['total']
+        for country, amount in savings_data['by_country'].items():
+            assets_by_country[country] = assets_by_country.get(country, Decimal('0.00')) + amount
+        for currency, amount in savings_data['by_currency'].items():
+            assets_by_currency[currency] = assets_by_currency.get(currency, Decimal('0.00')) + amount
+        assets_by_class['Cash & Savings'] = assets_by_class.get('Cash & Savings', Decimal('0.00')) + savings_data['total']
 
         # Future: Aggregate investments
         # investment_data = await self._aggregate_investments(user_id, base_currency, as_of_date)
@@ -217,9 +219,6 @@ class DashboardAggregationService:
         """
         Aggregate savings accounts data.
 
-        This method will be implemented when savings accounts are added.
-        Currently returns empty data.
-
         Args:
             user_id: User UUID
             base_currency: Target currency
@@ -228,16 +227,49 @@ class DashboardAggregationService:
         Returns:
             Dict with total, by_country, by_currency breakdowns
         """
-        # TODO: Implement when savings accounts model is added
-        # Query savings accounts for user
-        # Convert balances to base currency
-        # Group by country and currency
+        from models.savings_account import SavingsAccount
+
+        total = Decimal('0.00')
+        by_country = {}
+        by_currency = {}
+
+        # Query all active savings accounts
+        stmt = select(SavingsAccount).where(
+            and_(
+                SavingsAccount.user_id == user_id,
+                SavingsAccount.is_active == True
+            )
+        )
+        result = await self.db.execute(stmt)
+        accounts = result.scalars().all()
+
+        for account in accounts:
+            # Convert to base currency
+            if account.currency.value == base_currency:
+                amount = account.current_balance
+            else:
+                converted, _, _ = await self.currency_service.convert_amount(
+                    account.current_balance,
+                    account.currency.value,
+                    base_currency
+                )
+                amount = converted
+
+            total += amount
+
+            # Track by country
+            country = account.country.value
+            by_country[country] = by_country.get(country, Decimal('0.00')) + amount
+
+            # Track by currency
+            currency = account.currency.value
+            by_currency[currency] = by_currency.get(currency, Decimal('0.00')) + amount
 
         return {
-            'total': Decimal('0.00'),
-            'by_country': {},
-            'by_currency': {},
-            'accounts': []
+            'total': total,
+            'by_country': by_country,
+            'by_currency': by_currency,
+            'accounts': accounts
         }
 
     def _build_breakdown(

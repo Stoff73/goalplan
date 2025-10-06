@@ -584,11 +584,16 @@ async def get_total_pension_pot(
         state_pension = result.scalar_one_or_none()
 
         return TotalPotResponse(
-            total_current_value=total_data["total_current_value"],
-            total_projected_value=total_data["total_projected_value"],
+            total_current_value=total_data["total_pot"],
+            total_projected_value=total_data["total_pot"],  # Same as current for now
             pensions=[
-                PensionPotSummary(**pension_data)
-                for pension_data in total_data["pensions"]
+                PensionPotSummary(
+                    pension_id=pension_data["pension_id"],
+                    pension_type=pension_data["pension_type"],
+                    provider=pension_data["provider"],
+                    current_value=pension_data["value"]
+                )
+                for pension_data in total_data["breakdown"]
             ],
             state_pension_annual=state_pension.estimated_annual_amount if state_pension else None
         )
@@ -869,3 +874,47 @@ async def calculate_annuity_quote(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to calculate annuity quote: {str(e)}"
         )
+
+
+# ============================================================================
+# SA RETIREMENT ENDPOINTS
+# ============================================================================
+
+@router.get("/retirement/sa-total-savings")
+async def get_sa_total_savings(
+    current_user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get total SA retirement savings summary."""
+    from sqlalchemy import select, func
+    from models.retirement import SARetirementFund
+
+    result = await db.execute(
+        select(
+            func.sum(SARetirementFund.current_value).label('total_value'),
+            func.sum(SARetirementFund.current_value * 1.05).label('projected_value')
+        ).where(
+            SARetirementFund.user_id == current_user_id,
+            SARetirementFund.is_deleted == False
+        )
+    )
+    row = result.first()
+
+    return {
+        "totalValue": float(row.total_value or 0),
+        "projectedValue": float(row.projected_value or 0),
+        "annualContributions": 0,
+        "retirementAge": 65
+    }
+
+
+@router.get("/retirement/sa-section-10c")
+async def get_sa_section_10c(
+    current_user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get Section 10C deduction status."""
+    return {
+        "deductionClaimed": 0,
+        "maxDeductible": 350000
+    }

@@ -52,14 +52,14 @@ else
     echo -e "${YELLOW}No frontend PID file found${NC}"
 fi
 
-# Kill any remaining processes on ports 8000 and 5173
+# Kill any remaining processes on ports 8001 and 5173
 echo ""
-echo -e "${YELLOW}Checking for processes on ports 8000 and 5173...${NC}"
+echo -e "${YELLOW}Checking for processes on ports 8001 and 5173...${NC}"
 
-# Check port 8000 (backend)
-BACKEND_PORT_PID=$(lsof -ti:8000 2>/dev/null || true)
+# Check port 8001 (backend)
+BACKEND_PORT_PID=$(lsof -ti:8001 2>/dev/null || true)
 if [ ! -z "$BACKEND_PORT_PID" ]; then
-    echo -e "${YELLOW}Killing process on port 8000 (PID: $BACKEND_PORT_PID)${NC}"
+    echo -e "${YELLOW}Killing process on port 8001 (PID: $BACKEND_PORT_PID)${NC}"
     kill -9 $BACKEND_PORT_PID 2>/dev/null || true
 fi
 

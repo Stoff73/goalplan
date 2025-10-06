@@ -88,12 +88,12 @@ class Recommendation(Base):
 
     # Recommendation Classification
     recommendation_type = Column(
-        SQLEnum(RecommendationType, name='recommendation_type_enum', create_type=False),
+        SQLEnum(RecommendationType, name='recommendation_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True
     )
     priority = Column(
-        SQLEnum(RecommendationPriority, name='recommendation_priority_enum', create_type=False),
+        SQLEnum(RecommendationPriority, name='recommendation_priority_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True
     )
@@ -114,7 +114,7 @@ class Recommendation(Base):
         doc="Estimated financial benefit in base currency"
     )
     currency = Column(
-        SQLEnum(Currency, name='currency_enum', create_type=False),
+        SQLEnum(Currency, name='currency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         default=Currency.GBP,
         nullable=False
     )

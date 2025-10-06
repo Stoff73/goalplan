@@ -705,7 +705,7 @@ async def get_savings_summary(
                 if account.currency == Currency.GBP:
                     emergency_fund_total += balance
                 else:
-                    converted = await currency_service.convert_amount(
+                    converted, _, _ = await currency_service.convert_amount(
                         balance,
                         account.currency.value,
                         "GBP"
@@ -716,7 +716,7 @@ async def get_savings_summary(
                 if account.currency == Currency.GBP:
                     savings_goal_total += balance
                 else:
-                    converted = await currency_service.convert_amount(
+                    converted, _, _ = await currency_service.convert_amount(
                         balance,
                         account.currency.value,
                         "GBP"

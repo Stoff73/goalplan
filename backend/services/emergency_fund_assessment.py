@@ -103,7 +103,7 @@ class EmergencyFundAssessmentService:
             if account.currency.value == base_currency:
                 total += account.current_balance
             else:
-                converted = await self.currency_service.convert_amount(
+                converted, _, _ = await self.currency_service.convert_amount(
                     amount=account.current_balance,
                     from_currency=account.currency.value,
                     to_currency=base_currency

@@ -77,7 +77,7 @@ class EstateAsset(Base):
 
     # Asset Details
     asset_type = Column(
-        SQLEnum(AssetType, name='asset_type_enum', create_type=False),
+        SQLEnum(AssetType, name='asset_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         doc="Type of asset (property, investments, etc.)"
     )
@@ -209,7 +209,7 @@ class EstateLiability(Base):
 
     # Liability Details
     liability_type = Column(
-        SQLEnum(LiabilityType, name='liability_type_enum', create_type=False),
+        SQLEnum(LiabilityType, name='liability_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         doc="Type of liability (mortgage, loan, etc.)"
     )
@@ -696,12 +696,12 @@ class Gift(Base):
 
     # Gift Classification
     gift_type = Column(
-        SQLEnum(GiftType, name='gift_type_enum', create_type=False),
+        SQLEnum(GiftType, name='gift_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         doc="Gift type (PET, EXEMPT, CHARGEABLE)"
     )
     exemption_type = Column(
-        SQLEnum(ExemptionType, name='exemption_type_enum', create_type=False),
+        SQLEnum(ExemptionType, name='exemption_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True,
         doc="Exemption type applied (if EXEMPT gift)"
     )

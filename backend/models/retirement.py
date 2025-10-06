@@ -113,7 +113,7 @@ class UKPension(Base):
 
     # Pension Details
     pension_type = Column(
-        SQLEnum(PensionType, name='pension_type_enum', create_type=False),
+        SQLEnum(PensionType, name='pension_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     provider = Column(String(255), nullable=False)
@@ -133,7 +133,7 @@ class UKPension(Base):
 
     # Investment Strategy (DC pensions)
     investment_strategy = Column(
-        SQLEnum(InvestmentStrategy, name='investment_strategy_enum', create_type=False),
+        SQLEnum(InvestmentStrategy, name='investment_strategy_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
     assumed_growth_rate = Column(
@@ -162,7 +162,7 @@ class UKPension(Base):
 
     # Status
     status = Column(
-        SQLEnum(PensionStatus, name='pension_status_enum', create_type=False),
+        SQLEnum(PensionStatus, name='pension_status_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         default=PensionStatus.ACTIVE,
         nullable=False,
         index=True
@@ -320,11 +320,11 @@ class UKPensionContribution(Base):
 
     # Contribution Details
     frequency = Column(
-        SQLEnum(ContributionFrequency, name='contribution_frequency_enum', create_type=False),
+        SQLEnum(ContributionFrequency, name='contribution_frequency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     tax_relief_method = Column(
-        SQLEnum(TaxReliefMethod, name='tax_relief_method_enum', create_type=False),
+        SQLEnum(TaxReliefMethod, name='tax_relief_method_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
 
@@ -440,7 +440,7 @@ class UKPensionDBDetails(Base):
 
     # Scheme Details
     scheme_type = Column(
-        SQLEnum(DBSchemeType, name='db_scheme_type_enum', create_type=False),
+        SQLEnum(DBSchemeType, name='db_scheme_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     normal_retirement_age = Column(
@@ -468,7 +468,7 @@ class UKPensionDBDetails(Base):
 
     # Indexation
     indexation_type = Column(
-        SQLEnum(IndexationType, name='indexation_type_enum', create_type=False),
+        SQLEnum(IndexationType, name='indexation_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=IndexationType.CPI
     )
@@ -1248,7 +1248,7 @@ class SARetirementFund(Base):
 
     # Fund Details
     fund_type = Column(
-        SQLEnum(SAFundType, name='sa_fund_type_enum', create_type=False),
+        SQLEnum(SAFundType, name='sa_fund_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     provider = Column(String(255), nullable=False)
@@ -1273,7 +1273,7 @@ class SARetirementFund(Base):
 
     # Investment Strategy
     investment_strategy = Column(
-        SQLEnum(InvestmentStrategy, name='investment_strategy_enum', create_type=False),
+        SQLEnum(InvestmentStrategy, name='investment_strategy_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
     assumed_growth_rate = Column(
@@ -1285,7 +1285,7 @@ class SARetirementFund(Base):
 
     # Status
     status = Column(
-        SQLEnum(SAFundStatus, name='sa_fund_status_enum', create_type=False),
+        SQLEnum(SAFundStatus, name='sa_fund_status_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         default=SAFundStatus.ACTIVE,
         nullable=False,
         index=True

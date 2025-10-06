@@ -112,13 +112,13 @@ class SavingsAccount(Base):
     account_number_encrypted = Column(Text, nullable=False)  # Encrypted account number
 
     account_type = Column(
-        SQLEnum(AccountType, name='savings_account_type_enum', create_type=False),
+        SQLEnum(AccountType, name='savings_account_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True
     )
 
     currency = Column(
-        SQLEnum(Currency, name='currency_enum', create_type=False),
+        SQLEnum(Currency, name='currency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -137,7 +137,7 @@ class SavingsAccount(Base):
     )  # Annual percentage
 
     interest_payment_frequency = Column(
-        SQLEnum(InterestFrequency, name='savings_interest_frequency_enum', create_type=False),
+        SQLEnum(InterestFrequency, name='savings_interest_frequency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
 
@@ -147,12 +147,12 @@ class SavingsAccount(Base):
 
     # Account Purpose and Location
     purpose = Column(
-        SQLEnum(AccountPurpose, name='savings_account_purpose_enum', create_type=False),
+        SQLEnum(AccountPurpose, name='savings_account_purpose_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
 
     country = Column(
-        SQLEnum(AccountCountry, name='savings_account_country_enum', create_type=False),
+        SQLEnum(AccountCountry, name='savings_account_country_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -397,7 +397,7 @@ class TFSAContribution(Base):
         nullable=False
     )
     contribution_type = Column(
-        SQLEnum(TFSAContributionType, name='tfsa_contribution_type_enum', create_type=False),
+        SQLEnum(TFSAContributionType, name='tfsa_contribution_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=TFSAContributionType.DEPOSIT
     )

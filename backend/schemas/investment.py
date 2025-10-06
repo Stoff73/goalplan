@@ -273,7 +273,7 @@ class HoldingResponse(BaseModel):
     account_id: UUID
 
     security_type: SecurityType
-    ticker: str
+    ticker: Optional[str] = None
     isin: Optional[str] = None
     security_name: str
 
@@ -577,7 +577,7 @@ class TopHolding(BaseModel):
 
     id: str
     security_name: str
-    ticker: str
+    ticker: Optional[str] = None
     quantity: Decimal
     current_price: Decimal
     current_value: Decimal

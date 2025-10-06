@@ -517,6 +517,32 @@ async def get_income_summary(
         )
 
 
+@router.get("/summary/{year_start}/{year_end}", response_model=IncomeSummary)
+async def get_income_summary_slash_format(
+    year_start: str,
+    year_end: str,
+    country: str = Query('UK', description="UK or SA"),
+    current_user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get income summary for a tax year (alternative route accepting slash format).
+
+    This endpoint handles frontend calls like /summary/2025/26
+    and forwards to the main summary endpoint logic.
+    """
+    # Construct tax year string in standard format
+    tax_year = f"{year_start}-{year_end}"
+
+    # Call the main summary endpoint logic
+    return await get_income_summary(
+        tax_year=tax_year,
+        country=country,
+        current_user_id=current_user_id,
+        db=db
+    )
+
+
 # Helper functions
 
 async def _get_income_or_404(

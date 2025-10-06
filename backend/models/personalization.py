@@ -86,7 +86,7 @@ class UserPreference(Base):
 
     # Preference Details
     preference_type = Column(
-        SQLEnum(PreferenceType, name='preference_type_enum', create_type=False),
+        SQLEnum(PreferenceType, name='preference_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         doc="Type of preference (layout, currency, notifications, etc.)"
     )
@@ -157,7 +157,7 @@ class UserBehavior(Base):
 
     # Action Details
     action_type = Column(
-        SQLEnum(ActionType, name='action_type_enum', create_type=False),
+        SQLEnum(ActionType, name='action_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True,
         doc="Type of action performed"
@@ -229,7 +229,7 @@ class PersonalizedInsight(Base):
 
     # Insight Details
     insight_type = Column(
-        SQLEnum(InsightType, name='insight_type_enum', create_type=False),
+        SQLEnum(InsightType, name='insight_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True,
         doc="Type of insight"

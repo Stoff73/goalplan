@@ -82,7 +82,7 @@ class UserIncome(Base):
 
     # Income Details
     income_type = Column(
-        SQLEnum(IncomeType, name='income_type_enum', create_type=True),
+        SQLEnum(IncomeType, name='income_type_enum', create_type=True, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     source_country = Column(String(2), nullable=False)  # 'UK', 'ZA', 'US', etc.
@@ -92,7 +92,7 @@ class UserIncome(Base):
     # Amount and Currency
     amount = Column(Numeric(15, 2), nullable=False)
     currency = Column(
-        SQLEnum(Currency, name='currency_enum', create_type=True),
+        SQLEnum(Currency, name='currency_enum', create_type=True, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     amount_in_gbp = Column(Numeric(15, 2), nullable=True)  # Converted amount (cached)
@@ -102,7 +102,7 @@ class UserIncome(Base):
 
     # Frequency and Tax Year
     frequency = Column(
-        SQLEnum(IncomeFrequency, name='income_frequency_enum', create_type=True),
+        SQLEnum(IncomeFrequency, name='income_frequency_enum', create_type=True, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     tax_year_uk = Column(String(10), nullable=True)  # '2023/24' format
@@ -113,7 +113,7 @@ class UserIncome(Base):
     is_gross = Column(Boolean, default=True, nullable=False)  # TRUE = gross, FALSE = net
     tax_withheld_amount = Column(Numeric(15, 2), nullable=True)
     tax_withheld_currency = Column(
-        SQLEnum(Currency, name='currency_enum', create_type=False),
+        SQLEnum(Currency, name='currency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
 

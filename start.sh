@@ -101,18 +101,18 @@ fi
 
 # Start backend in background
 cd "$PROJECT_DIR/backend"
-nohup python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000 > "$PROJECT_DIR/backend.log" 2>&1 &
+nohup python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001 > "$PROJECT_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > "$PROJECT_DIR/.backend.pid"
 
 echo -e "${GREEN}✓ Backend starting (PID: $BACKEND_PID)${NC}"
-echo -e "  URL: http://localhost:8000"
-echo -e "  API Docs: http://localhost:8000/docs"
+echo -e "  URL: http://localhost:8001"
+echo -e "  API Docs: http://localhost:8001/docs"
 
 # Wait for backend to start
 echo -e "${YELLOW}Waiting for backend to start...${NC}"
 for i in {1..30}; do
-    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -s http://localhost:8001/health > /dev/null 2>&1; then
         echo -e "${GREEN}✓ Backend is ready!${NC}"
         break
     fi
@@ -166,8 +166,8 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  ✓ GoalPlan is running!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "${BLUE}Backend:${NC}  http://localhost:8000"
-echo -e "${BLUE}API Docs:${NC} http://localhost:8000/docs"
+echo -e "${BLUE}Backend:${NC}  http://localhost:8001"
+echo -e "${BLUE}API Docs:${NC} http://localhost:8001/docs"
 echo -e "${BLUE}Frontend:${NC} http://localhost:5173"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"

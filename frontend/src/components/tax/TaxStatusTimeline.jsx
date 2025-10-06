@@ -252,7 +252,7 @@ export function TaxStatusTimeline({ history, loading }) {
         </div>
 
         {/* Timeline Connector (visual line between items) */}
-        <style jsx>{`
+        <style>{`
           .space-y-4 > div:not(:last-child)::after {
             content: '';
             display: block;

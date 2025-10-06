@@ -333,7 +333,8 @@ class IncomeProjectionService:
                 if pension.current_value:
                     # Project to retirement age (simplified - no contributions)
                     # In production, would use project_dc_pension_value()
-                    years_to_retirement = target_retirement_age - 65  # Assume current age ~65 for simplicity
+                    retirement_age = target_retirement_age or 65  # Default to 65 if not provided
+                    years_to_retirement = retirement_age - 65  # Assume current age ~65 for simplicity
                     if years_to_retirement < 0:
                         years_to_retirement = 0
 

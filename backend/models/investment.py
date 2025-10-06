@@ -146,14 +146,14 @@ class InvestmentAccount(Base):
 
     # Account Details
     account_type = Column(
-        SQLEnum(AccountType, name='account_type_enum', create_type=False),
+        SQLEnum(AccountType, name='account_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     provider = Column(String(255), nullable=False)
     account_number_encrypted = Column(Text, nullable=False)  # Encrypted account number
     account_number_last_4 = Column(String(4), nullable=True)  # Last 4 digits for display
     country = Column(
-        SQLEnum(AccountCountry, name='account_country_enum', create_type=False),
+        SQLEnum(AccountCountry, name='account_country_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     base_currency = Column(String(3), nullable=False)
@@ -161,7 +161,7 @@ class InvestmentAccount(Base):
 
     # Status
     status = Column(
-        SQLEnum(AccountStatus, name='account_status_enum', create_type=False),
+        SQLEnum(AccountStatus, name='account_status_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         default=AccountStatus.ACTIVE,
         nullable=False,
         index=True
@@ -248,7 +248,7 @@ class InvestmentHolding(Base):
 
     # Security Details
     security_type = Column(
-        SQLEnum(SecurityType, name='security_type_enum', create_type=False),
+        SQLEnum(SecurityType, name='security_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     ticker = Column(String(20), nullable=True, index=True)
@@ -264,11 +264,11 @@ class InvestmentHolding(Base):
 
     # Asset Classification
     asset_class = Column(
-        SQLEnum(AssetClass, name='asset_class_enum', create_type=False),
+        SQLEnum(AssetClass, name='asset_class_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     region = Column(
-        SQLEnum(Region, name='region_enum', create_type=False),
+        SQLEnum(Region, name='region_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     sector = Column(String(100), nullable=True)
@@ -402,7 +402,7 @@ class TaxLot(Base):
     realized_gain = Column(Numeric(15, 2), nullable=True)
     cgt_tax_year = Column(String(10), nullable=True)
     disposal_method = Column(
-        SQLEnum(DisposalMethod, name='disposal_method_enum', create_type=False),
+        SQLEnum(DisposalMethod, name='disposal_method_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
 
@@ -463,7 +463,7 @@ class DividendIncome(Base):
 
     # Source Country
     source_country = Column(
-        SQLEnum(SourceCountry, name='source_country_enum', create_type=False),
+        SQLEnum(SourceCountry, name='source_country_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -526,7 +526,7 @@ class CapitalGainRealized(Base):
     # Tax Details
     tax_year = Column(String(10), nullable=False)
     country = Column(
-        SQLEnum(AccountCountry, name='account_country_enum', create_type=False),
+        SQLEnum(AccountCountry, name='account_country_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -577,7 +577,7 @@ class TaxAdvantagedInvestment(Base):
 
     # Scheme Details
     scheme_type = Column(
-        SQLEnum(SchemeType, name='scheme_type_enum', create_type=False),
+        SQLEnum(SchemeType, name='scheme_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     investment_date = Column(Date, nullable=False)

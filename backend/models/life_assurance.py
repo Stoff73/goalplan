@@ -127,12 +127,12 @@ class LifeAssurancePolicy(Base):
     policy_number_encrypted = Column(Text, nullable=False)  # Encrypted policy number
     provider = Column(String(255), nullable=False)
     provider_country = Column(
-        SQLEnum(ProviderCountry, name='provider_country_enum', create_type=False),
+        SQLEnum(ProviderCountry, name='provider_country_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
     policy_type = Column(
-        SQLEnum(PolicyType, name='policy_type_enum', create_type=False),
+        SQLEnum(PolicyType, name='policy_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -142,7 +142,7 @@ class LifeAssurancePolicy(Base):
         nullable=False
     )
     currency = Column(
-        SQLEnum(Currency, name='currency_enum', create_type=False),
+        SQLEnum(Currency, name='currency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -162,7 +162,7 @@ class LifeAssurancePolicy(Base):
         nullable=False
     )
     premium_frequency = Column(
-        SQLEnum(PremiumFrequency, name='premium_frequency_enum', create_type=False),
+        SQLEnum(PremiumFrequency, name='premium_frequency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -179,7 +179,7 @@ class LifeAssurancePolicy(Base):
     # Trust Details (UK policies)
     written_in_trust = Column(Boolean, default=False, nullable=False)
     trust_type = Column(
-        SQLEnum(TrustType, name='trust_type_enum', create_type=False),
+        SQLEnum(TrustType, name='trust_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True
     )
 
@@ -194,7 +194,7 @@ class LifeAssurancePolicy(Base):
 
     # Status
     status = Column(
-        SQLEnum(PolicyStatus, name='policy_status_enum', create_type=False),
+        SQLEnum(PolicyStatus, name='policy_status_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         default=PolicyStatus.ACTIVE,
         nullable=False,
         index=True
@@ -338,7 +338,7 @@ class PolicyBeneficiary(Base):
     address_encrypted = Column(Text, nullable=False)
 
     beneficiary_relationship = Column(
-        SQLEnum(BeneficiaryRelationship, name='beneficiary_relationship_enum', create_type=False),
+        SQLEnum(BeneficiaryRelationship, name='beneficiary_relationship_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -419,7 +419,7 @@ class PolicyTrustDetail(Base):
 
     # Trust Details
     trust_type = Column(
-        SQLEnum(TrustType, name='trust_type_enum', create_type=False),
+        SQLEnum(TrustType, name='trust_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -493,7 +493,7 @@ class PolicyDocument(Base):
 
     # Document Details
     document_type = Column(
-        SQLEnum(DocumentType, name='document_type_enum', create_type=False),
+        SQLEnum(DocumentType, name='document_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
 
@@ -802,7 +802,7 @@ class PolicyPremiumReminder(Base):
         doc="Date when reminder should be sent"
     )
     reminder_type = Column(
-        SQLEnum(ReminderType, name='reminder_type_enum', create_type=False),
+        SQLEnum(ReminderType, name='reminder_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         default=ReminderType.IN_APP,
         nullable=False,
         doc="Type of reminder (EMAIL or IN_APP)"

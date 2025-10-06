@@ -192,7 +192,7 @@ export function PolicyList({
       ANNUALLY: 'annually',
       SINGLE: 'single premium',
     };
-    return labels[frequency] || frequency.toLowerCase();
+    return labels[frequency] || (frequency ? frequency.toLowerCase() : 'unknown');
   };
 
   // Filter and sort policies

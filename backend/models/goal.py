@@ -127,7 +127,7 @@ class FinancialGoal(Base):
         doc="User-friendly name for the goal"
     )
     goal_type = Column(
-        SQLEnum(GoalType, name='goal_type_enum', create_type=False),
+        SQLEnum(GoalType, name='goal_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True
     )
@@ -179,12 +179,12 @@ class FinancialGoal(Base):
 
     # Priority and Status
     priority = Column(
-        SQLEnum(GoalPriority, name='goal_priority_enum', create_type=False),
+        SQLEnum(GoalPriority, name='goal_priority_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=GoalPriority.MEDIUM
     )
     status = Column(
-        SQLEnum(GoalStatus, name='goal_status_enum', create_type=False),
+        SQLEnum(GoalStatus, name='goal_status_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=GoalStatus.NOT_STARTED,
         index=True
@@ -210,7 +210,7 @@ class FinancialGoal(Base):
         doc="Automatic contribution amount per period"
     )
     contribution_frequency = Column(
-        SQLEnum(ContributionFrequency, name='contribution_frequency_enum', create_type=False),
+        SQLEnum(ContributionFrequency, name='contribution_frequency_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True,
         doc="Frequency of automatic contributions"
     )
@@ -377,7 +377,7 @@ class GoalMilestone(Base):
 
     # Achievement
     status = Column(
-        SQLEnum(MilestoneStatus, name='milestone_status_enum', create_type=False),
+        SQLEnum(MilestoneStatus, name='milestone_status_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=MilestoneStatus.PENDING
     )
@@ -551,7 +551,7 @@ class GoalRecommendation(Base):
 
     # Recommendation Details
     recommendation_type = Column(
-        SQLEnum(RecommendationType, name='recommendation_type_enum', create_type=False),
+        SQLEnum(RecommendationType, name='recommendation_type_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False
     )
     recommendation_text = Column(
@@ -567,7 +567,7 @@ class GoalRecommendation(Base):
 
     # Priority
     priority = Column(
-        SQLEnum(GoalPriority, name='goal_priority_enum', create_type=False),
+        SQLEnum(GoalPriority, name='goal_priority_enum', create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=GoalPriority.MEDIUM
     )

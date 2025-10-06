@@ -191,6 +191,29 @@ async def root():
     }
 
 
+# API v1 health check endpoint
+@app.get(f"{settings.API_V1_PREFIX}/health", tags=["Health"])
+async def api_v1_health_check():
+    """
+    API v1 health check endpoint.
+
+    Returns the API status and basic system information.
+    This endpoint is used by the frontend to verify API connectivity.
+
+    Returns:
+        dict: Health status information
+    """
+    redis_status = "connected" if await redis_client.check_connection() else "disconnected"
+
+    return {
+        "status": "healthy",
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "environment": settings.ENVIRONMENT,
+        "redis": redis_status,
+    }
+
+
 # API v1 routes
 from api.v1.auth import router as auth_router
 from api.v1.user import router as user_router

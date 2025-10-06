@@ -296,15 +296,13 @@ class AnnualAllowanceService:
         usage = {
             "tax_year": tax_year,
             "total_contributions": total_contributions,
-            "annual_allowance": annual_allowance,
-            "carry_forward": carry_forward,
-            "total_carry_forward": total_carry_forward,
-            "total_available": total_available,
+            "annual_allowance_limit": annual_allowance,
+            "carry_forward_available": carry_forward,
             "allowance_used": allowance_used,
             "allowance_remaining": allowance_remaining,
-            "excess": excess,
+            "excess_contributions": excess,
             "mpaa_applies": mpaa_triggered,
-            "tapered": tapered
+            "tapered_allowance": tapered
         }
 
         logger.info(

@@ -75,7 +75,7 @@ async def create_fund(
 
 @router.get("/", response_model=List[SAFundResponse])
 async def list_funds(
-    current_user: User = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """List all SA retirement funds for the current user."""
@@ -84,7 +84,7 @@ async def list_funds(
 
     result = await db.execute(
         select(SARetirementFund).where(
-            SARetirementFund.user_id == current_user.id,
+            SARetirementFund.user_id == current_user_id,
             SARetirementFund.is_deleted == False
         )
     )

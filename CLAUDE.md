@@ -289,6 +289,36 @@ Detailed feature specs are in sharded markdown files in project root:
 - Track contributions per tax year
 - Alert when nearing limits
 
+## Demo User & Mock Data
+
+A comprehensive demo user with realistic mock data is available for testing and development.
+
+**Demo Credentials:**
+- **Email:** `demo@goalplan.com`
+- **Password:** `Demo123!`
+
+**To populate demo data:**
+```bash
+cd backend
+source .venv/bin/activate  # Activate virtual environment
+python populate_demo_data.py
+```
+
+**Demo user includes:**
+- User profile (John Smith, dual UK/SA citizenship, born in SA, lives in UK)
+- Tax status (UK resident, SA-born, non-UK domicile)
+- Income (£140k UK employment + R15k/month SA rental)
+- Savings (3 accounts: UK current, Cash ISA, SA savings)
+- Investments (Stocks & Shares ISA + Offshore bond)
+- Retirement (UK occupational pension, SIPP, SA retirement annuity)
+- Life insurance (£500k cover, NOT in trust, wife as beneficiary)
+- Assets (UK house £650k joint, SA rental R2.4m)
+- Liabilities (UK mortgage £320k, credit card £2.5k)
+
+**Mock data specification:** See `mockData.md` for profile details.
+
+---
+
 ## Common Commands
 
 ### Backend
@@ -312,6 +342,9 @@ cd backend
 
 # Run database migrations
 alembic upgrade head
+
+# Populate demo data (after migrations)
+python populate_demo_data.py
 
 # Run tests - ALWAYS use .venv Python:
 /Users/CSJ/Desktop/goalplan/.venv/bin/python -m pytest tests/ -v
@@ -473,7 +506,8 @@ Individual becomes deemed domiciled if:
 3. **Check current phase** - Look at `TASKS_README.md` for current status
 4. **Review feature specs** - Read relevant shard files for task context
 5. **Verify tests pass** - Run existing test suite before making changes
-6. **Plan delegation** - Identify which agent should handle the work
+6. **Populate demo data** - Run `python populate_demo_data.py` for testing (demo@goalplan.com / Demo123!)
+7. **Plan delegation** - Identify which agent should handle the work
 
 ## Resources
 
